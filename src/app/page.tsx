@@ -22,113 +22,83 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
       />
       
-      <section className="animate-fade-in" style={{
+      <section style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         padding: '6rem 2rem'
       }}>
         <h1 style={{
-          fontSize: '4.5rem',
+          fontSize: '4rem',
           fontWeight: 900,
           textAlign: 'center',
-          lineHeight: 1.1,
-          marginBottom: '1.5rem'
+          lineHeight: 1,
+          marginBottom: '1rem'
         }}>
-          Shivam's <span className="gradient-text">Stash Utility</span>
+          STASH
         </h1>
         <p style={{
-          fontSize: '1.25rem',
-          maxWidth: '700px',
+          fontSize: '1rem',
+          maxWidth: '500px',
           textAlign: 'center',
-          opacity: 0.8,
-          marginBottom: '3rem'
+          opacity: 0.6,
+          marginBottom: '4rem'
         }}>
-          A raw, simple interface for dumping DSA problem strings, pasting important doc links, and gathering visual asset URLs. No fluff.
+          ROOT DIRECTORY / RAW INPUT
         </p>
 
-        {/* Feature Cards */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '2rem',
+          gap: '1rem',
           width: '100%',
           maxWidth: '1000px'
         }}>
-          <Link href="/notepad" style={{ textDecoration: 'none' }}>
+          <Link href="/notepad" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="glass-card">
-              <div style={{ marginBottom: '1.5rem', color: 'hsl(var(--primary))' }}>
-                <Edit3 size={40} />
+              <div style={{ marginBottom: '1rem' }}>
+                <Edit3 size={24} />
               </div>
-              <h3 style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>DSA Notepad</h3>
-              <p style={{ opacity: 0.7, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                A huge textbox to paste and save multi-line algorithm names or notes directly to Firestore.
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>NOTEPAD</h3>
+              <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                RAW TEXT STORAGE
               </p>
               <div className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                Open Notepad <Send size={18} />
+                OPEN
               </div>
             </div>
           </Link>
 
-          <Link href="/links" style={{ textDecoration: 'none' }}>
+          <Link href="/links" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="glass-card">
-              <div style={{ marginBottom: '1.5rem', color: 'hsl(var(--accent))' }}>
-                <LinkIcon size={40} />
+              <div style={{ marginBottom: '1rem' }}>
+                <LinkIcon size={24} />
               </div>
-              <h3 style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>Web Links</h3>
-              <p style={{ opacity: 0.7, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                Paste HTTPS URLs to create a simple, clickable directory of documentation and resources.
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>LINKS</h3>
+              <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                URL REPOSITORY
               </p>
-              <div className="btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)))' }}>
-                Open Links <Send size={18} />
+              <div className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                OPEN
               </div>
             </div>
           </Link>
 
-          <Link href="/images" style={{ textDecoration: 'none' }}>
+          <Link href="/images" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="glass-card">
-              <div style={{ marginBottom: '1.5rem', color: 'var(--foreground)' }}>
-                <ImageIcon size={40} />
+              <div style={{ marginBottom: '1rem' }}>
+                <ImageIcon size={24} />
               </div>
-              <h3 style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>Image Repo</h3>
-              <p style={{ opacity: 0.7, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                Paste direct remote image URLs to render system design schemas instantly.
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>IMAGES</h3>
+              <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                VISUAL ASSETS
               </p>
-              <div className="btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, var(--foreground), hsl(var(--accent)))', color: '#000' }}>
-                Open Images <Send size={18} />
+              <div className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                OPEN
               </div>
             </div>
           </Link>
         </div>
-      </section>
-
-      {/* SEO Boilerplate */}
-      <section style={{ maxWidth: '900px', padding: '4rem 2rem', margin: '0 auto' }}>
-        <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', textAlign: 'center' }}>Streamlined <span className="highlight">Utility Design</span></h2>
-        <div style={{ lineHeight: 1.8, opacity: 0.9 }}>
-          <p>
-            When developers are in the zone solving complex architecture problems or tracing Data Structures and Algorithms, 
-            heavy graphical interfaces are a distraction. Functionality, copy-paste efficiency, and data syncing take priority.
-          </p>
-          <br />
-          <h3>Core Minimalist Principles</h3>
-          <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem' }}>
-            <li>No forms, no dropdowns—just raw inputs.</li>
-            <li>Constant time O(1) saving via Firebase.</li>
-            <li>Instant rendering for visual problem tracking.</li>
-          </ul>
-        </div>
-      </section>
-      
-      <section style={{ textAlign: 'center', paddingBottom: '4rem' }}>
-          <h3>Directory Hub</h3>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem' }}>
-             <Link href="/notepad" className="highlight">Notepad</Link>
-             <span>|</span>
-             <Link href="/links" className="highlight">Links</Link>
-             <span>|</span>
-             <Link href="/images" className="highlight">Images</Link>
-          </div>
       </section>
     </>
   );

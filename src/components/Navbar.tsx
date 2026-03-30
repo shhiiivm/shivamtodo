@@ -20,65 +20,45 @@ export default function Navbar() {
       left: 0,
       right: 0,
       zIndex: 1000,
-      padding: '1rem 2rem',
+      padding: '0.75rem 2rem',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      borderBottom: '1px solid var(--glass-border)'
+      background: 'black',
+      borderBottom: '1px solid #333'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '10px',
-          background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: 'bold',
-          fontSize: '1.2rem',
-          color: 'white'
-        }}>S</div>
-        <span className="gradient-text" style={{ fontSize: '1.5rem', fontWeight: 800 }}>TODO Shivam</span>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <Link href="/" style={{ textDecoration: 'none', color: 'white', fontSize: '1.2rem', fontWeight: 900 }}>
+          STASH
+        </Link>
       </div>
 
       {/* Desktop Menu */}
-      <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }} className="desktop-nav">
+      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }} className="desktop-nav">
         {navItems.map((item) => (
           <Link 
             key={item.href} 
             href={item.href} 
             style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              color: 'var(--foreground)', 
+              color: 'white', 
               textDecoration: 'none',
               fontWeight: 500,
-              fontSize: '0.95rem',
-              transition: 'color 0.2s',
-              opacity: 0.8
+              fontSize: '0.8rem',
+              opacity: 0.6,
+              transition: 'opacity 0.2s',
+              textTransform: 'uppercase'
             }}
             onMouseOver={(e) => (e.currentTarget.style.opacity = '1')}
-            onMouseOut={(e) => (e.currentTarget.style.opacity = '0.8')}
+            onMouseOut={(e) => (e.currentTarget.style.opacity = '0.6')}
           >
-            {item.icon}
             {item.name}
           </Link>
         ))}
       </div>
 
-      {/* Mobile Menu Toggle (Simplified) */}
-      <div className="mobile-only" onClick={() => setIsOpen(!isOpen)} style={{ cursor: 'pointer' }}>
-        {isOpen ? <X color="#fff" /> : <Menu color="#fff" />}
-      </div>
-
       <style jsx>{`
         @media (max-width: 768px) {
           .desktop-nav { display: none !important; }
-        }
-        @media (min-width: 769px) {
-          .mobile-only { display: none !important; }
         }
       `}</style>
     </nav>

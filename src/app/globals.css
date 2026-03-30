@@ -1,29 +1,29 @@
 :root {
-  /* HSL Colors - Sleek Premium Palette */
-  --background: 220 33% 5%;
-  --foreground: 210 40% 98%;
+  /* Simple Black and White Palette */
+  --background: 0 0% 0%; /* Pure Black */
+  --foreground: 0 0% 100%; /* Pure White */
   
-  --primary: 263.4 70% 50.4%; /* Electric Violet */
-  --primary-foreground: 210 40% 98%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
   
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 0 0% 10%;
+  --secondary-foreground: 0 0% 100%;
   
-  --accent: 189 94% 43%; /* Cyan */
-  --accent-foreground: 210 40% 98%;
+  --accent: 0 0% 100%;
+  --accent-foreground: 0 0% 0%;
   
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 70%;
   
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 100%;
   
-  --border: 217.2 32.6% 17.5%;
-  --radius: 0.75rem;
+  --border: 0 0% 20%;
+  --radius: 0; /* Square edges for a raw look */
   
-  --glass: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-glow: rgba(138, 43, 226, 0.15);
+  --glass: transparent;
+  --glass-border: hsla(0, 0%, 100%, 0.2);
+  --glass-glow: transparent;
 }
 
 * {
@@ -52,54 +52,48 @@ h1, h2, h3, h4 {
   letter-spacing: -0.02em;
 }
 
-/* Glassmorphism Styles */
+/* Minimalist Container Styles */
 .glass {
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: black;
+  border-bottom: 1px solid var(--border);
 }
 
 .glass-card {
-  background: var(--glass);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
+  background: black;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.2s;
 }
 
 .glass-card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 10px 40px var(--glass-glow);
+  border-color: white;
 }
 
 /* Buttons */
 .btn-primary {
-  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
-  color: white;
-  border: none;
+  background: white;
+  color: black;
+  border: 1px solid white;
   border-radius: var(--radius);
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, opacity 0.2s;
+  transition: background 0.2s, color 0.2s;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .btn-primary:hover {
-  transform: scale(1.02);
-  opacity: 0.9;
+  background: transparent;
+  color: white;
 }
 
 /* Inputs */
 .input-glass {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
+  background: black;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.75rem 1rem;
   color: white;
@@ -109,27 +103,21 @@ h1, h2, h3, h4 {
 
 .input-glass:focus {
   outline: none;
-  border-color: hsl(var(--accent));
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  border-color: white;
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
+  opacity: 1; /* Disable animations for a "raw" feel */
 }
 
 /* Utility */
 .highlight {
-  color: hsl(var(--accent));
+  color: white;
+  text-decoration: underline;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: white;
+  background: none;
+  -webkit-text-fill-color: initial;
 }
