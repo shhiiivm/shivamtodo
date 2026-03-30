@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# lockfiles (ignoring to fix Netlify deployment with weird date issues)
+package-lock.json
