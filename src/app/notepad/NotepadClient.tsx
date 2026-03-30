@@ -101,28 +101,81 @@ export default function NotepadClient() {
         </div>
       </div>
 
-      {/* Editor */}
-      <div className={`editor ${!activeId ? 'hidden-mobile' : 'visible-mobile'}`}>
+      {/* Content Area */}
+      <div className={`editor ${!activeId ? 'visible-mobile' : 'visible-mobile'}`}>
         {!activeId ? (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.1 }}>
-             <h1 style={{ fontSize: '3rem', fontWeight: 900 }}>SELECT</h1>
-             <ChevronRight size={32} />
+          <div style={{ padding: '2rem' }}>
+             <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
+                <h1 style={{ fontSize: '3rem', fontWeight: 900, letterSpacing: '4px' }}>RECENT</h1>
+                <p style={{ opacity: 0.5, fontSize: '0.8rem' }}>SELECT A STASH OR CREATE A NEW ONE</p>
+             </div>
+
+             <div style={{ 
+               display: 'grid', 
+               gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+               gap: '1rem',
+               maxWidth: '1200px',
+               margin: '0 auto'
+             }}>
+                {notes.map(note => (
+                  <div 
+                    key={note.id} 
+                    className="glass-card" 
+                    style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      justifyContent: 'space-between',
+                      minHeight: '200px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setActiveId(note.id)}
+                  >
+                    <div>
+                       <h3 style={{ fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', marginBottom: '0.75rem' }}>{note.id.replace(/-/g, ' ')}</h3>
+                       <p style={{ opacity: 0.4, fontSize: '0.85rem', lineHeight: '1.5', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                          {note.text || 'EMPTY NOTE...'}
+                       </p>
+                    </div>
+                    <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                       <span style={{ fontSize: '0.7rem', opacity: 0.3 }}>ID: {note.id}</span>
+                       <div className="btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.7rem' }}>OPEN</div>
+                    </div>
+                  </div>
+                ))}
+
+                <div 
+                  onClick={createNote}
+                  className="glass-card" 
+                  style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    minHeight: '200px',
+                    border: '1px dashed #444',
+                    cursor: 'pointer',
+                    opacity: 0.6
+                  }}
+                >
+                   <Plus size={32} style={{ marginBottom: '0.5rem' }} />
+                   <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>NEW STASH</span>
+                </div>
+             </div>
           </div>
         ) : (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <button 
                     onClick={() => setActiveId(null)} 
-                    className="mobile-only-btn"
-                    style={{ background: 'none', border: '1px solid #333', color: 'white', padding: '0.4rem 0.6rem' }}
+                    style={{ background: 'none', border: '1px solid #333', color: 'white', padding: '0.5rem 0.8rem', fontSize: '0.7rem', fontWeight: 800 }}
                   >
                     BACK
                   </button>
-                  <h1 style={{ fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>{activeId.replace(/-/g, ' ')}</h1>
+                  <h1 style={{ fontSize: '1.5rem', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>{activeId.replace(/-/g, ' ')}</h1>
                </div>
-               <button onClick={handleSave} className="btn-primary" disabled={saving} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
-                 {saving ? '...' : 'SAVE'}
+               <button onClick={handleSave} className="btn-primary" disabled={saving} style={{ padding: '0.6rem 1.5rem', fontSize: '0.8rem' }}>
+                 {saving ? 'SAVING...' : 'SAVE'}
                </button>
             </div>
 
@@ -133,15 +186,15 @@ export default function NotepadClient() {
               className="input-glass"
               style={{ 
                 flex: 1,
-                minHeight: '60vh', 
-                padding: '1rem', 
+                minHeight: '65vh', 
+                padding: '2rem', 
                 fontFamily: 'monospace', 
                 fontSize: '1rem', 
                 resize: 'none',
                 backgroundColor: 'black',
                 color: 'white',
                 border: '1px solid #333',
-                lineHeight: '1.4'
+                lineHeight: '1.6'
               }}
             />
           </div>
