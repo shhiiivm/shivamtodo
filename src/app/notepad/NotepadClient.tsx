@@ -13,6 +13,7 @@ interface Note {
 export default function NotepadClient() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [viewCount, setViewCount] = useState<number>(1);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -105,61 +106,113 @@ export default function NotepadClient() {
       <div className={`editor ${!activeId ? 'visible-mobile' : 'visible-mobile'}`}>
         {!activeId ? (
           <div style={{ padding: '2rem' }}>
-             <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
-                <h1 style={{ fontSize: '3rem', fontWeight: 900, letterSpacing: '4px' }}>RECENT</h1>
-                <p style={{ opacity: 0.5, fontSize: '0.8rem' }}>SELECT A STASH OR CREATE A NEW ONE</p>
+             <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ visibility: 'hidden' }} className="desktop-only">spacer</div>
+                <div style={{ textAlign: 'center' }}>
+                   <h1 style={{ fontSize: '3rem', fontWeight: 900, letterSpacing: '4px' }}>RECENT</h1>
+                   <p style={{ opacity: 0.5, fontSize: '0.8rem' }}>SELECT A STASH OR CREATE A NEW ONE</p>
+                </div>
+                <div className="desktop-only" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                   <span style={{ fontSize: '0.7rem', fontWeight: 800, opacity: 0.5 }}>VIEW:</span>
+                   {[1, 2, 3, 4].map(num => (
+                     <button 
+                       key={num} 
+                       onClick={() => setViewCount(num)}
+                       style={{ 
+                         background: viewCount === num ? 'white' : 'transparent',
+                         color: viewCount === num ? 'black' : 'white',
+                         border: '1px solid white',
+                         padding: '0.3rem 0.6rem',
+                         fontSize: '0.8rem',
+                         fontWeight: 900,
+                         cursor: 'pointer'
+                       }}
+                     >
+                       {num}
+                     </button>
+                   ))}
+                </div>
              </div>
 
              <div style={{ 
                display: 'grid', 
-               gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+               gridTemplateColumns: viewCount > 1 ? `repeat(${viewCount}, 1fr)` : 'repeat(auto-fill, minmax(280px, 1fr))', 
                gap: '1rem',
-               maxWidth: '1200px',
+               maxWidth: viewCount > 1 ? '100%' : '1200px',
                margin: '0 auto'
              }}>
-                {notes.map(note => (
+                {notes.slice(0, viewCount > 1 ? viewCount : 10).map(note => (
                   <div 
                     key={note.id} 
                     className="glass-card" 
                     style={{ 
                       display: 'flex', 
                       flexDirection: 'column', 
-                      justifyContent: 'space-between',
-                      minHeight: '200px',
-                      cursor: 'pointer'
+                      minHeight: viewCount > 1 ? '70vh' : '200px',
                     }}
-                    onClick={() => setActiveId(note.id)}
                   >
-                    <div>
-                       <h3 style={{ fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', marginBottom: '0.75rem' }}>{note.id.replace(/-/g, ' ')}</h3>
-                       <p style={{ opacity: 0.4, fontSize: '0.85rem', lineHeight: '1.5', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
-                          {note.text || 'EMPTY NOTE...'}
-                       </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                       <h3 style={{ fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase' }}>{note.id.replace(/-/g, ' ')}</h3>
+                       <div 
+                         onClick={() => setActiveId(note.id)}
+                         className="btn-primary" 
+                         style={{ padding: '0.3rem 0.6rem', fontSize: '0.6rem' }}
+                       >
+                         FULL
+                       </div>
                     </div>
-                    <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                       <span style={{ fontSize: '0.7rem', opacity: 0.3 }}>ID: {note.id}</span>
-                       <div className="btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.7rem' }}>OPEN</div>
-                    </div>
+                    
+                    {viewCount > 1 ? (
+                      <textarea
+                        defaultValue={note.text}
+                        onBlur={async (e) => {
+                          const newText = e.target.value;
+                          if (newText !== note.text) {
+                            await setDoc(doc(db, 'notes', note.id), { text: newText, updatedAt: new Date() });
+                          }
+                        }}
+                        placeholder="EMPTY..."
+                        className="input-glass"
+                        style={{ 
+                          flex: 1,
+                          padding: '1rem', 
+                          fontFamily: 'monospace', 
+                          fontSize: '0.9rem', 
+                          resize: 'none',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                          border: '1px solid #222',
+                          lineHeight: '1.4'
+                        }}
+                      />
+                    ) : (
+                      <div onClick={() => setActiveId(note.id)} style={{ cursor: 'pointer' }}>
+                        <p style={{ opacity: 0.4, fontSize: '0.85rem', lineHeight: '1.5', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                            {note.text || 'EMPTY NOTE...'}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
 
-                <div 
-                  onClick={createNote}
-                  className="glass-card" 
-                  style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    minHeight: '200px',
-                    border: '1px dashed #444',
-                    cursor: 'pointer',
-                    opacity: 0.6
-                  }}
-                >
-                   <Plus size={32} style={{ marginBottom: '0.5rem' }} />
-                   <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>NEW STASH</span>
-                </div>
+                {viewCount === 1 && (
+                  <div 
+                    onClick={createNote}
+                    className="glass-card" 
+                    style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      minHeight: '200px',
+                      border: '1px dashed #444',
+                      cursor: 'pointer',
+                      opacity: 0.6
+                    }}
+                  >
+                    <Plus size={32} style={{ marginBottom: '0.5rem' }} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>NEW STASH</span>
+                  </div>
+                )}
              </div>
           </div>
         ) : (
