@@ -35,7 +35,7 @@ export default function NotepadClient() {
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 900 }}>NOTEPAD</h1>
-        <p style={{ opacity: 0.6 }}>RAW TEXT STORAGE</p>
+        <p style={{ opacity: 0.6 }}>{loading ? 'LOADING...' : 'RAW TEXT STORAGE'}</p>
       </div>
 
       <div className="glass-card">
@@ -43,13 +43,21 @@ export default function NotepadClient() {
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            disabled={loading}
-            placeholder="PASTE HERE..."
+            placeholder="TYPE OR PASTE HERE..."
             className="input-glass"
-            style={{ minHeight: '60vh', padding: '1.5rem', fontFamily: 'monospace', fontSize: '1rem', resize: 'vertical' }}
+            style={{ 
+              minHeight: '60vh', 
+              padding: '1.5rem', 
+              fontFamily: 'monospace', 
+              fontSize: '1rem', 
+              resize: 'vertical',
+              backgroundColor: 'black',
+              color: 'white',
+              border: '1px solid #333'
+            }}
           />
-          <button type="submit" className="btn-primary">
-            {saving ? 'SAVED' : 'SAVE'}
+          <button type="submit" className="btn-primary" disabled={saving}>
+            {saving ? 'SAVING...' : 'SAVE'}
           </button>
         </form>
       </div>
