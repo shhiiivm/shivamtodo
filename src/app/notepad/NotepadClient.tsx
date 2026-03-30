@@ -15,6 +15,9 @@ export default function NotepadClient() {
         setContent(docSnap.data().text || '');
       }
       setLoading(false);
+    }, (error) => {
+      console.error("FIRESTORE ERROR:", error);
+      setLoading(false);
     });
     return () => unsub();
   }, []);
