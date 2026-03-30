@@ -76,36 +76,25 @@ export default function NotepadClient() {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 300px) 1fr', minHeight: 'calc(100vh - 80px)' }}>
+    <div className="notepad-container">
       {/* Sidebar */}
-      <div style={{ borderRight: '1px solid #333', padding: '1.5rem', background: '#050505' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 900, letterSpacing: '2px' }}>STASH</h2>
+      <div className={`sidebar ${activeId ? 'hidden-mobile' : 'visible-mobile'}`}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: '0.9rem', fontWeight: 900, letterSpacing: '2px' }}>STASH</h2>
           <Plus size={18} style={{ cursor: 'pointer' }} onClick={createNote} />
         </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
           {notes.map(note => (
-            <div
-              key={note.id}
+            <div 
+              key={note.id} 
               onClick={() => setActiveId(note.id)}
-              style={{
-                padding: '0.75rem',
-                border: activeId === note.id ? '1px solid white' : '1px solid #222',
-                cursor: 'pointer',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: activeId === note.id ? '#111' : 'transparent',
-                textTransform: 'uppercase',
-                fontSize: '0.8rem',
-                letterSpacing: '1px'
-              }}
+              className={`note-item ${activeId === note.id ? 'active' : ''}`}
             >
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span className="note-title">
                 {note.id.replace(/-/g, ' ')}
               </span>
-              <Trash2 size={14} style={{ opacity: 0.4 }} onClick={(e) => deleteNote(note.id, e)} />
+              <Trash2 size={12} style={{ opacity: 0.4 }} onClick={(e) => deleteNote(note.id, e)} />
             </div>
           ))}
           {loading && <p style={{ opacity: 0.5, fontSize: '0.7rem' }}>LOADING...</p>}
@@ -113,22 +102,28 @@ export default function NotepadClient() {
       </div>
 
       {/* Editor */}
-      <div style={{ padding: '2rem' }}>
+      <div className={`editor ${!activeId ? 'hidden-mobile' : 'visible-mobile'}`}>
         {!activeId ? (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.2 }}>
-            <h1 style={{ fontSize: '4rem', fontWeight: 900 }}>SELECT OR CREATE</h1>
-            <ChevronRight size={48} />
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.1 }}>
+             <h1 style={{ fontSize: '3rem', fontWeight: 900 }}>SELECT</h1>
+             <ChevronRight size={32} />
           </div>
         ) : (
-          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
-              <div>
-                <h1 style={{ fontSize: '2.5rem', fontWeight: 900, textTransform: 'uppercase' }}>{activeId.replace(/-/g, ' ')}</h1>
-                <p style={{ opacity: 0.5, fontSize: '0.8rem' }}>EDITING RAW TEXT</p>
-              </div>
-              <button onClick={handleSave} className="btn-primary" disabled={saving}>
-                {saving ? 'SAVING...' : 'SAVE CHANGES'}
-              </button>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <button 
+                    onClick={() => setActiveId(null)} 
+                    className="mobile-only-btn"
+                    style={{ background: 'none', border: '1px solid #333', color: 'white', padding: '0.4rem 0.6rem' }}
+                  >
+                    BACK
+                  </button>
+                  <h1 style={{ fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>{activeId.replace(/-/g, ' ')}</h1>
+               </div>
+               <button onClick={handleSave} className="btn-primary" disabled={saving} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+                 {saving ? '...' : 'SAVE'}
+               </button>
             </div>
 
             <textarea
@@ -136,21 +131,83 @@ export default function NotepadClient() {
               onChange={(e) => setContent(e.target.value)}
               placeholder="TYPE HERE..."
               className="input-glass"
-              style={{
-                minHeight: '70vh',
-                padding: '2rem',
-                fontFamily: 'monospace',
-                fontSize: '1rem',
+              style={{ 
+                flex: 1,
+                minHeight: '60vh', 
+                padding: '1rem', 
+                fontFamily: 'monospace', 
+                fontSize: '1rem', 
                 resize: 'none',
                 backgroundColor: 'black',
                 color: 'white',
                 border: '1px solid #333',
-                lineHeight: '1.6'
+                lineHeight: '1.4'
               }}
             />
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        .notepad-container {
+          display: grid;
+          grid-template-columns: 280px 1fr;
+          min-height: calc(100vh - 80px);
+        }
+        .sidebar {
+          border-right: 1px solid #222;
+          padding: 1.5rem;
+          background: #050505;
+        }
+        .note-item {
+          padding: 0.75rem;
+          border: 1px solid #111;
+          cursor: pointer;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          text-transform: uppercase;
+          font-size: 0.75rem;
+          letter-spacing: 1px;
+        }
+        .note-item.active {
+          border-color: white;
+          background: #111;
+        }
+        .note-title {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .editor {
+          padding: 1.5rem;
+          background: black;
+        }
+        .mobile-only-btn {
+          display: none;
+        }
+
+        @media (max-width: 768px) {
+          .notepad-container {
+            grid-template-columns: 1fr;
+          }
+          .hidden-mobile {
+            display: none !important;
+          }
+          .visible-mobile {
+            display: flex !important;
+            flex-direction: column;
+            width: 100%;
+          }
+          .sidebar, .editor {
+            padding: 1rem;
+            min-height: calc(100vh - 80px);
+          }
+          .mobile-only-btn {
+            display: inline-block;
+          }
+        }
+      `}</style>
     </div>
   );
 }
