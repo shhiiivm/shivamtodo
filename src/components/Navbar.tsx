@@ -8,8 +8,9 @@ export default function Navbar() {
 
   const navItems = [
     { name: 'Dashboard', href: '/', icon: <Home size={20} /> },
-    { name: 'DSA Tracker', href: '/dsa-tracker', icon: <ListTodo size={20} /> },
-    { name: 'Media Gallery', href: '/gallery', icon: <Image size={20} /> },
+    { name: 'Notepad', href: '/notepad', icon: <ListTodo size={20} /> },
+    { name: 'Links', href: '/links', icon: <LinkIcon size={20} /> },
+    { name: 'Images', href: '/images', icon: <Image size={20} /> },
   ];
 
   return (
