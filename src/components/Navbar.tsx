@@ -29,7 +29,7 @@ export default function Navbar() {
     }}>
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <Link href="/" style={{ textDecoration: 'none', color: 'white', fontSize: '1.2rem', fontWeight: 900 }}>
-          STASH
+          SHIVAM
         </Link>
       </div>
 

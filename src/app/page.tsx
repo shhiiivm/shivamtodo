@@ -28,24 +28,6 @@ export default function Home() {
         alignItems: 'center',
         padding: '6rem 2rem'
       }}>
-        <h1 style={{
-          fontSize: '4rem',
-          fontWeight: 900,
-          textAlign: 'center',
-          lineHeight: 1,
-          marginBottom: '1rem'
-        }}>
-          STASH
-        </h1>
-        <p style={{
-          fontSize: '1rem',
-          maxWidth: '500px',
-          textAlign: 'center',
-          opacity: 0.6,
-          marginBottom: '4rem'
-        }}>
-          ROOT DIRECTORY / RAW INPUT
-        </p>
 
         <div style={{
           display: 'grid',
@@ -61,7 +43,6 @@ export default function Home() {
               </div>
               <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>NOTEPAD</h3>
               <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                RAW TEXT STORAGE
               </p>
               <div className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
                 OPEN
@@ -76,7 +57,6 @@ export default function Home() {
               </div>
               <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>LINKS</h3>
               <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                URL REPOSITORY
               </p>
               <div className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
                 OPEN
@@ -91,7 +71,6 @@ export default function Home() {
               </div>
               <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>IMAGES</h3>
               <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                VISUAL ASSETS
               </p>
               <div className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
                 OPEN
