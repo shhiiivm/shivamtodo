@@ -202,21 +202,28 @@ export default function VideosClient() {
         </div>
       ) : (
         <div className="video-list">
-          {videos.map(item => (
-            <div key={item.id} className="glass-card list-item" onClick={() => setPlayingVideo(item.url)}>
-              <div className="list-thumb">
-                <Play size={16} fill="white" />
+          {videos.map(item => {
+            const thumb = getThumbnail(item.url);
+            return (
+              <div key={item.id} className="glass-card list-item" onClick={() => setPlayingVideo(item.url)}>
+                <div className="list-thumb">
+                  {thumb ? (
+                    <img src={thumb} alt="Thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <Play size={16} fill="white" />
+                  )}
+                </div>
+                <div className="list-info">
+                  <div className="list-url">{item.url}</div>
+                  <div className="list-date">{new Date(item.createdAt).toLocaleString()}</div>
+                </div>
+                <div className="list-actions">
+                  <Download size={18} className="icon-btn" onClick={(e) => downloadVideo(e, item.url, item.id)} />
+                  <Trash2 size={18} className="icon-btn danger" onClick={(e) => deleteVideo(e, item.id)} />
+                </div>
               </div>
-              <div className="list-info">
-                <div className="list-url">{item.url}</div>
-                <div className="list-date">{new Date(item.createdAt).toLocaleString()}</div>
-              </div>
-              <div className="list-actions">
-                <Download size={18} className="icon-btn" onClick={(e) => downloadVideo(e, item.url, item.id)} />
-                <Trash2 size={18} className="icon-btn danger" onClick={(e) => deleteVideo(e, item.id)} />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
