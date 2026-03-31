@@ -8,6 +8,7 @@
 - [x] Dashboard Home
 - [x] Premium Glassmorphism UI
 - [x] Internal Linking across all tools
+- [x] Pin to Top Functionality (Notes, Links, Images, Videos)
 
 ## TODO
 (Empty)

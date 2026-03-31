@@ -185,13 +185,13 @@ export default function ImagesClient() {
       ) : viewMode === 'grid' ? (
         <div className="image-grid">
           {sortedImages.map(item => (
-            <div key={item.id} className="glass-card grid-item" style={{ 
-                padding: 0, 
-                overflow: 'hidden', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                transition: 'transform 0.2s',
-                borderColor: item.isPinned ? 'rgba(255,255,255,0.3)' : undefined
+            <div key={item.id} className="glass-card grid-item" style={{
+              padding: 0,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              transition: 'transform 0.2s',
+              borderColor: item.isPinned ? 'rgba(255,255,255,0.3)' : undefined
             }}>
               <div style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img
