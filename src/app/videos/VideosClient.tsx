@@ -45,7 +45,6 @@ export default function VideosClient() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size limit (100MB)
     if (file.size > 100 * 1024 * 1024) {
         alert("File too large. Maximum size is 100MB.");
         return;
@@ -57,7 +56,6 @@ export default function VideosClient() {
     formData.append('upload_preset', UPLOAD_PRESET);
 
     try {
-      // Cloudinary video upload endpoint
       const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`, {
         method: 'POST',
         body: formData,
@@ -172,29 +170,28 @@ export default function VideosClient() {
       ) : viewMode === 'grid' ? (
         <div className="video-grid">
           {videos.map(item => (
-            <div key={item.id} className="glass-card video-item" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#000' }}>
+            <div key={item.id} className="glass-card grid-item" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#000' }}>
                 <video
                   src={item.url}
                   className="w-full h-full object-cover"
-                  controls
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </div>
-              <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)' }}>
+              <div className="card-actions" style={{ padding: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)' }}>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   <Download
-                    size={18}
+                    size={16}
                     style={{ cursor: 'pointer', opacity: 0.6 }}
                     onClick={() => downloadVideo(item.url, item.id)}
                   />
                   <Trash2
-                    size={18}
+                    size={16}
                     style={{ cursor: 'pointer', opacity: 0.6, color: '#ff4444' }}
                     onClick={() => deleteVideo(item.id)}
                   />
                 </div>
-                <span style={{ fontSize: '0.7rem', opacity: 0.3, fontWeight: 700 }}>
+                <span style={{ fontSize: '0.6rem', opacity: 0.3, fontWeight: 700 }}>
                   {new Date(item.createdAt).toLocaleDateString()}
                 </span>
               </div>
@@ -236,15 +233,8 @@ export default function VideosClient() {
       <style jsx>{`
         .video-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-          gap: 2rem;
-        }
-        .video-item {
-          transition: transform 0.2s, border-color 0.2s;
-        }
-        .video-item:hover {
-          transform: translateY(-4px);
-          border-color: #444;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 1.5rem;
         }
         .icon-toggle {
           padding: 0.5rem;
@@ -256,10 +246,17 @@ export default function VideosClient() {
           justify-content: center;
           transition: all 0.2s;
         }
-        @media (max-width: 768px) {
+        @media (max-width: 640px) {
           .video-grid {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.2rem;
+            padding: 0.5rem;
+          }
+          .grid-item {
+            border-radius: 2px !important;
+          }
+          .card-actions {
+            display: none !important;
           }
         }
       `}</style>
