@@ -2,12 +2,13 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, doc, onSnapshot, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { Plus, Trash2, ChevronLeft, Save, Search } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, Save, Search, Pin } from 'lucide-react';
 
 interface Note {
   id: string;
   text: string;
   updatedAt: any;
+  isPinned?: boolean;
 }
 
 export default function NotepadClient() {
@@ -72,10 +73,21 @@ export default function NotepadClient() {
     }
   };
 
+  const togglePin = async (id: string, e: React.MouseEvent, isPinned: boolean) => {
+    e.stopPropagation();
+    await setDoc(doc(db, 'notes', id), { isPinned: !isPinned }, { merge: true });
+  };
+
   const filteredNotes = notes.filter(n => 
     n.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
     n.text.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const sortedNotes = [...filteredNotes].sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return 0;
+  });
 
   return (
     <div className="notepad-container">
@@ -96,14 +108,24 @@ export default function NotepadClient() {
             />
         </div>
         <div className="notes-list">
-          {filteredNotes.map(note => (
+          {sortedNotes.map(note => (
             <div
               key={note.id}
               onClick={() => setActiveId(note.id)}
               className={`note-item ${activeId === note.id ? 'active' : ''}`}
             >
-              <span className="note-title">{note.id.replace(/-/g, ' ')}</span>
-              <Trash2 size={12} className="delete-icon" onClick={(e) => deleteNote(note.id, e)} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                  {note.isPinned && <Pin size={10} fill="white" style={{ flexShrink: 0 }} />}
+                  <span className="note-title">{note.id.replace(/-/g, ' ')}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <Pin 
+                    size={12} 
+                    className={`pin-icon ${note.isPinned ? 'active' : ''}`} 
+                    onClick={(e) => togglePin(note.id, e, !!note.isPinned)} 
+                />
+                <Trash2 size={12} className="delete-icon" onClick={(e) => deleteNote(note.id, e)} />
+              </div>
             </div>
           ))}
           {loading && <p className="loading-text">LOADING...</p>}
@@ -153,19 +175,29 @@ export default function NotepadClient() {
             <div className="notes-grid" style={{
               gridTemplateColumns: viewCount > 1 ? `repeat(${viewCount}, 1fr)` : undefined,
             }}>
-              {filteredNotes.map(note => (
+              {sortedNotes.map(note => (
                 <div
                   key={note.id}
-                  className="note-card"
+                  className={`note-card ${note.isPinned ? 'pinned-card' : ''}`}
                   onClick={() => setActiveId(note.id)}
                 >
                   <div className="note-card-header">
-                    <h3 className="note-card-title">{note.id.replace(/-/g, ' ')}</h3>
-                    <Trash2
-                        size={16}
-                        className="delete-icon-card"
-                        onClick={(e) => { e.stopPropagation(); deleteNote(note.id, e); }}
-                      />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {note.isPinned && <Pin size={14} fill="white" />}
+                        <h3 className="note-card-title">{note.id.replace(/-/g, ' ')}</h3>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.8rem' }}>
+                        <Pin
+                            size={16}
+                            className={`pin-icon-card ${note.isPinned ? 'active' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); togglePin(note.id, e, !!note.isPinned); }}
+                        />
+                        <Trash2
+                            size={16}
+                            className="delete-icon-card"
+                            onClick={(e) => { e.stopPropagation(); deleteNote(note.id, e); }}
+                        />
+                    </div>
                   </div>
                   <div className="note-preview">
                     <p>{note.text || 'EMPTY NOTE...'}</p>
@@ -294,16 +326,24 @@ export default function NotepadClient() {
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        .delete-icon {
+        .delete-icon, .pin-icon {
           opacity: 0;
           transition: opacity 0.2s;
         }
-        .note-item:hover .delete-icon {
+        .note-item:hover .delete-icon, .note-item:hover .pin-icon {
           opacity: 0.4;
+        }
+        .pin-icon.active {
+            opacity: 1 !important;
+            color: #44ff44;
         }
         .delete-icon:hover {
           opacity: 1 !important;
           color: #ff4444;
+        }
+        .pin-icon:hover {
+            opacity: 1 !important;
+            color: white;
         }
 
         /* Main Content */
@@ -383,16 +423,28 @@ export default function NotepadClient() {
           margin: 0;
           letter-spacing: 1px;
         }
-        .delete-icon-card {
+        .delete-icon-card, .pin-icon-card {
            opacity: 0.3;
            transition: opacity 0.2s;
         }
-        .note-card:hover .delete-icon-card {
+        .note-card:hover .delete-icon-card, .note-card:hover .pin-icon-card {
             opacity: 0.6;
+        }
+        .pin-icon-card.active {
+            opacity: 1 !important;
+            color: #44ff44;
         }
         .delete-icon-card:hover {
             opacity: 1 !important;
             color: #ff4444;
+        }
+        .pin-icon-card:hover {
+            opacity: 1 !important;
+            color: white;
+        }
+        .pinned-card {
+            border-color: rgba(255, 255, 255, 0.3) !important;
+            background: #0f0f0f !important;
         }
         .note-preview p {
           font-size: 0.85rem;

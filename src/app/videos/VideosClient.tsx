@@ -1,13 +1,14 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { Trash2, Film, Upload, Download, Loader2, LayoutGrid, List, Play, X } from 'lucide-react';
+import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { Trash2, Film, Upload, Download, Loader2, LayoutGrid, List, Play, X, Pin } from 'lucide-react';
 
 interface SavedVideo {
   id: string;
   url: string;
   createdAt: string;
+  isPinned?: boolean;
 }
 
 export default function VideosClient() {
@@ -91,6 +92,17 @@ export default function VideosClient() {
       await deleteDoc(doc(db, 'saved-videos', id));
     }
   };
+
+  const togglePin = async (e: React.MouseEvent, id: string, isPinned: boolean) => {
+    e.stopPropagation();
+    await setDoc(doc(db, 'saved-videos', id), { isPinned: !isPinned }, { merge: true });
+  };
+
+  const sortedVideos = [...videos].sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return 0;
+  });
 
   const downloadVideo = async (e: React.MouseEvent, videoUrl: string, id: string) => {
     e.stopPropagation();
@@ -177,12 +189,12 @@ export default function VideosClient() {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="video-grid">
-          {videos.map(item => {
+          {sortedVideos.map(item => {
             const thumb = getThumbnail(item.url);
             return (
               <div
                 key={item.id}
-                className="grid-item"
+                className={`grid-item ${item.isPinned ? 'pinned-video' : ''}`}
                 onClick={() => setPlayingVideo(item.url)}
               >
                 {thumb ? (
@@ -192,9 +204,33 @@ export default function VideosClient() {
                     <Play size={24} fill="white" />
                   </div>
                 )}
+
+                {item.isPinned && (
+                  <div className="pin-badge">
+                    <Pin size={14} fill="white" />
+                  </div>
+                )}
+
                 {/* Desktop hover actions */}
                 <div className="grid-overlay">
-                  <Play size={30} fill="white" />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+                    <Play size={30} fill="white" />
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <Pin
+                        size={20}
+                        style={{
+                          color: item.isPinned ? '#44ff44' : 'white',
+                          opacity: item.isPinned ? 1 : 0.6
+                        }}
+                        onClick={(e) => togglePin(e, item.id, !!item.isPinned)}
+                      />
+                      <Trash2
+                        size={20}
+                        style={{ color: 'white', opacity: 0.6 }}
+                        onClick={(e) => deleteVideo(e, item.id)}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             );
@@ -202,10 +238,10 @@ export default function VideosClient() {
         </div>
       ) : (
         <div className="video-list">
-          {videos.map(item => {
+          {sortedVideos.map(item => {
             const thumb = getThumbnail(item.url);
             return (
-              <div key={item.id} className="glass-card list-item" onClick={() => setPlayingVideo(item.url)}>
+              <div key={item.id} className={`glass-card list-item ${item.isPinned ? 'pinned-video-list' : ''}`} onClick={() => setPlayingVideo(item.url)}>
                 <div className="list-thumb">
                   {thumb ? (
                     <img src={thumb} alt="Thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -214,10 +250,19 @@ export default function VideosClient() {
                   )}
                 </div>
                 <div className="list-info">
-                  <div className="list-url">{item.url}</div>
+                  <div className="list-url" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {item.isPinned && <Pin size={12} fill="white" />}
+                    {item.url}
+                  </div>
                   <div className="list-date">{new Date(item.createdAt).toLocaleString()}</div>
                 </div>
                 <div className="list-actions">
+                  <Pin
+                    size={18}
+                    className={`icon-btn ${item.isPinned ? 'active' : ''}`}
+                    style={{ color: item.isPinned ? '#44ff44' : 'inherit' }}
+                    onClick={(e) => togglePin(e, item.id, !!item.isPinned)}
+                  />
                   <Download size={18} className="icon-btn" onClick={(e) => downloadVideo(e, item.url, item.id)} />
                   <Trash2 size={18} className="icon-btn danger" onClick={(e) => deleteVideo(e, item.id)} />
                 </div>
@@ -430,6 +475,27 @@ export default function VideosClient() {
             justify-content: center;
         }
 
+        .pinned-video {
+            border-color: rgba(255, 255, 255, 0.4) !important;
+        }
+        .pinned-video-list {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        .pin-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            background: rgba(0,0,0,0.5);
+            padding: 4px;
+            border-radius: 50%;
+        }
+        .icon-btn.active {
+            opacity: 1;
+            color: #44ff44;
+        }
+
         @media (max-width: 640px) {
           .container { padding: 1rem; }
           .title { font-size: 1.8rem; }
@@ -441,6 +507,7 @@ export default function VideosClient() {
             border: none;
           }
           .grid-overlay { display: none; }
+          .pin-badge { top: 5px; right: 5px; padding: 2px; }
           .header-actions { margin-bottom: 1rem; }
         }
       `}</style>
