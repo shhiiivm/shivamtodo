@@ -78,8 +78,8 @@ export default function NotepadClient() {
 
   return (
     <div className="notepad-container">
-      {/* Sidebar */}
-      <div className={`sidebar ${activeId ? 'hidden-mobile' : ''}`}>
+      {/* Sidebar - desktop only, hidden on mobile */}
+      <div className={`sidebar hidden-mobile`}>
         <div className="sidebar-header">
           <h2 className="sidebar-title">NOTES</h2>
           <button className="new-note-btn" onClick={createNote}>
@@ -115,7 +115,7 @@ export default function NotepadClient() {
       </div>
 
       {/* Content Area */}
-      <div className={`editor ${activeId ? '' : 'hidden-mobile'}`}>
+      <div className={`editor ${activeId ? '' : ''}`}>
         {!activeId ? (
           <div className="editor-inner">
             <div className="editor-header">
@@ -153,12 +153,20 @@ export default function NotepadClient() {
                 >
                   <div className="note-card-header">
                     <h3 className="note-card-title">{note.id.replace(/-/g, ' ')}</h3>
-                    <div
-                      onClick={(e) => { e.stopPropagation(); setActiveId(note.id); }}
-                      className="btn-primary"
-                      style={{ padding: '0.3rem 0.6rem', fontSize: '0.6rem' }}
-                    >
-                      OPEN
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <Trash2
+                        size={14}
+                        className="delete-icon-card"
+                        onClick={(e) => { e.stopPropagation(); deleteNote(note.id, e); }}
+                        style={{ opacity: 0.4 }}
+                      />
+                      <div
+                        onClick={(e) => { e.stopPropagation(); setActiveId(note.id); }}
+                        className="btn-primary"
+                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.6rem' }}
+                      >
+                        OPEN
+                      </div>
                     </div>
                   </div>
 
@@ -624,6 +632,16 @@ export default function NotepadClient() {
           .note-card {
             padding: 0.75rem;
           }
+        }
+
+        .delete-icon-card {
+            opacity: 0.4;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .delete-icon-card:hover {
+            opacity: 1 !important;
+            color: #ff4444;
         }
       `}</style>
     </div>
