@@ -44,7 +44,7 @@ export default function LinksClient() {
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 900 }}>LINKS</h1>
-        <p style={{ opacity: 0.6 }}>URL REPOSITORY</p>
+
       </div>
 
       <div className="glass-card" style={{ marginBottom: '2rem' }}>
