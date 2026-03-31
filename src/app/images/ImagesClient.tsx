@@ -165,11 +165,11 @@ export default function ImagesClient() {
       {loading ? (
         <div style={{ textAlign: 'center', opacity: 0.5, padding: '4rem' }}>
           <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto' }} />
-          <div style={{ marginTop: '1rem' }}>LOADING STASH...</div>
+          <div style={{ marginTop: '1rem' }}>LOADING...</div>
         </div>
       ) : images.length === 0 ? (
         <div style={{ textAlign: 'center', opacity: 0.5, padding: '4rem', border: '1px dashed #333', borderRadius: '1rem' }}>
-          STASH IS EMPTY
+          NO IMAGES YET
         </div>
       ) : viewMode === 'grid' ? (
         <div className="image-grid">
