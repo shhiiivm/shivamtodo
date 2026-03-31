@@ -1,13 +1,14 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, doc, onSnapshot, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { Plus, Trash2, ChevronLeft, Save, Search } from 'lucide-react';
+import { collection, doc, onSnapshot, setDoc, deleteDoc, query, orderBy, updateDoc } from 'firebase/firestore';
+import { Plus, Trash2, ChevronLeft, Save, Search, Pin } from 'lucide-react';
 
 interface Note {
   id: string;
   text: string;
   updatedAt: any;
+  pinned?: boolean;
 }
 
 export default function NotepadClient() {
@@ -20,7 +21,8 @@ export default function NotepadClient() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const q = query(collection(db, 'notes'), orderBy('updatedAt', 'desc'));
+    // Sort by pinned (desc) then updatedAt (desc)
+    const q = query(collection(db, 'notes'), orderBy('pinned', 'desc'), orderBy('updatedAt', 'desc'));
     const unsub = onSnapshot(q, (snapshot) => {
       const notesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Note));
       setNotes(notesData);
@@ -47,7 +49,7 @@ export default function NotepadClient() {
     const title = prompt("NEW NOTE NAME:");
     if (!title) return;
     const id = title.toLowerCase().replace(/\s+/g, '-');
-    await setDoc(doc(db, 'notes', id), { text: '', updatedAt: new Date() });
+    await setDoc(doc(db, 'notes', id), { text: '', updatedAt: new Date(), pinned: false });
     setActiveId(id);
   };
 
@@ -56,11 +58,20 @@ export default function NotepadClient() {
     if (!activeId) return;
     setSaving(true);
     try {
-      await setDoc(doc(db, 'notes', activeId), { text: content, updatedAt: new Date() });
+      await updateDoc(doc(db, 'notes', activeId), { text: content, updatedAt: new Date() });
       setTimeout(() => setSaving(false), 1000);
     } catch (err) {
       console.error(err);
       setSaving(false);
+    }
+  };
+
+  const togglePin = async (id: string, currentPinned: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await updateDoc(doc(db, 'notes', id), { pinned: !currentPinned });
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -72,8 +83,8 @@ export default function NotepadClient() {
     }
   };
 
-  const filteredNotes = notes.filter(n => 
-    n.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredNotes = notes.filter(n =>
+    n.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
     n.text.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -86,14 +97,14 @@ export default function NotepadClient() {
           <Plus size={18} className="icon-btn" onClick={createNote} />
         </div>
         <div className="search-container">
-            <Search size={14} style={{ opacity: 0.4 }} />
-            <input 
-                type="text" 
-                placeholder="SEARCH..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-            />
+          <Search size={14} style={{ opacity: 0.4 }} />
+          <input
+            type="text"
+            placeholder="SEARCH..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-input"
+          />
         </div>
         <div className="notes-list">
           {filteredNotes.map(note => (
@@ -102,8 +113,18 @@ export default function NotepadClient() {
               onClick={() => setActiveId(note.id)}
               className={`note-item ${activeId === note.id ? 'active' : ''}`}
             >
-              <span className="note-title">{note.id.replace(/-/g, ' ')}</span>
-              <Trash2 size={12} className="delete-icon" onClick={(e) => deleteNote(note.id, e)} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1, minWidth: 0 }}>
+                {note.pinned && <Pin size={10} fill="white" style={{ flexShrink: 0 }} />}
+                <span className="note-title">{note.id.replace(/-/g, ' ')}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <Pin
+                  size={12}
+                  className={`pin-icon ${note.pinned ? 'active' : ''}`}
+                  onClick={(e) => togglePin(note.id, !!note.pinned, e)}
+                />
+                <Trash2 size={12} className="delete-icon" onClick={(e) => deleteNote(note.id, e)} />
+              </div>
             </div>
           ))}
           {loading && <p className="loading-text">LOADING...</p>}
@@ -115,39 +136,39 @@ export default function NotepadClient() {
         {!activeId ? (
           <div className="grid-view">
             <div className="grid-header">
-               <div className="mobile-header">
-                  <h1 className="mobile-title">SHIVAM</h1>
-                  <button className="new-note-btn-mobile" onClick={createNote}>
-                    <Plus size={18} />
-                  </button>
-               </div>
-               
-               <div className="desktop-header desktop-only">
-                  <h1 className="recent-title">RECENT</h1>
-                  <div className="view-toggles">
-                    <span style={{ fontSize: '0.7rem', fontWeight: 800, opacity: 0.5 }}>VIEW:</span>
-                    {[1, 2, 3, 4].map(num => (
-                      <button
-                        key={num}
-                        onClick={() => setViewCount(num)}
-                        className={`view-btn ${viewCount === num ? 'active' : ''}`}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                  </div>
-               </div>
+              <div className="mobile-header">
+                <h1 className="mobile-title">SHIVAM</h1>
+                <button className="new-note-btn-mobile" onClick={createNote}>
+                  <Plus size={18} />
+                </button>
+              </div>
+
+              <div className="desktop-header desktop-only">
+                <h1 className="recent-title">RECENT</h1>
+                <div className="view-toggles">
+                  <span style={{ fontSize: '0.7rem', fontWeight: 800, opacity: 0.5 }}>VIEW:</span>
+                  {[1, 2, 3, 4].map(num => (
+                    <button
+                      key={num}
+                      onClick={() => setViewCount(num)}
+                      className={`view-btn ${viewCount === num ? 'active' : ''}`}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="search-container-mobile mobile-only">
-                <Search size={18} style={{ opacity: 0.4 }} />
-                <input 
-                    type="text" 
-                    placeholder="SEARCH NOTES..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="search-input-mobile"
-                />
+              <Search size={18} style={{ opacity: 0.4 }} />
+              <input
+                type="text"
+                placeholder="SEARCH NOTES..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input-mobile"
+              />
             </div>
 
             <div className="notes-grid" style={{
@@ -156,16 +177,26 @@ export default function NotepadClient() {
               {filteredNotes.map(note => (
                 <div
                   key={note.id}
-                  className="note-card"
+                  className={`note-card ${note.pinned ? 'pinned' : ''}`}
                   onClick={() => setActiveId(note.id)}
                 >
                   <div className="note-card-header">
-                    <h3 className="note-card-title">{note.id.replace(/-/g, ' ')}</h3>
-                    <Trash2
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {note.pinned && <Pin size={14} fill="white" />}
+                      <h3 className="note-card-title">{note.id.replace(/-/g, ' ')}</h3>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                      <Pin
+                        size={16}
+                        style={{ cursor: 'pointer', opacity: note.pinned ? 1 : 0.3 }}
+                        onClick={(e) => togglePin(note.id, !!note.pinned, e)}
+                      />
+                      <Trash2
                         size={16}
                         className="delete-icon-card"
                         onClick={(e) => { e.stopPropagation(); deleteNote(note.id, e); }}
                       />
+                    </div>
                   </div>
                   <div className="note-preview">
                     <p>{note.text || 'EMPTY NOTE...'}</p>
@@ -186,7 +217,10 @@ export default function NotepadClient() {
                   <ChevronLeft size={20} />
                   <span className="back-text">BACK</span>
                 </button>
-                <h1 className="active-note-title">{activeId.replace(/-/g, ' ')}</h1>
+                <h1 className="active-note-title">
+                  {notes.find(n => n.id === activeId)?.pinned && <Pin size={18} fill="white" style={{ marginRight: '0.5rem' }} />}
+                  {activeId.replace(/-/g, ' ')}
+                </h1>
               </div>
               <button onClick={handleSave} className="save-btn" disabled={saving}>
                 <Save size={18} />
@@ -294,12 +328,22 @@ export default function NotepadClient() {
           overflow: hidden;
           text-overflow: ellipsis;
         }
+        .pin-icon {
+          opacity: 0;
+          transition: all 0.2s;
+        }
+        .pin-icon.active {
+          opacity: 1 !important;
+        }
+        .note-item:hover .pin-icon {
+          opacity: 0.4;
+        }
         .delete-icon {
           opacity: 0;
           transition: opacity 0.2s;
         }
         .note-item:hover .delete-icon {
-          opacity: 0.4;
+          opacity: 0.3;
         }
         .delete-icon:hover {
           opacity: 1 !important;
@@ -364,9 +408,14 @@ export default function NotepadClient() {
           display: flex;
           flex-direction: column;
           min-height: 180px;
+          position: relative;
+        }
+        .note-card.pinned {
+            border-color: #555;
+            background: #0d0d0d;
         }
         .note-card:hover {
-          border-color: #444;
+          border-color: #666;
           transform: translateY(-2px);
           background: #0d0d0d;
         }
@@ -451,6 +500,8 @@ export default function NotepadClient() {
           font-weight: 900;
           text-transform: uppercase;
           margin: 0;
+          display: flex;
+          align-items: center;
         }
         .save-btn {
           background: white;

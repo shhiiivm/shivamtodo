@@ -1,13 +1,14 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { Trash2, Film, Upload, Download, Loader2, LayoutGrid, List, Play, X } from 'lucide-react';
+import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { Trash2, Film, Upload, Download, Loader2, LayoutGrid, List, Play, X, Pin } from 'lucide-react';
 
 interface SavedVideo {
   id: string;
   url: string;
   createdAt: string;
+  pinned?: boolean;
 }
 
 export default function VideosClient() {
@@ -23,7 +24,7 @@ export default function VideosClient() {
   const UPLOAD_PRESET = "shivamtodo";
 
   useEffect(() => {
-    const q = query(collection(db, 'saved-videos'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'saved-videos'), orderBy('pinned', 'desc'), orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, (snapshot) => {
       setVideos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedVideo)));
       setLoading(false);
@@ -33,18 +34,16 @@ export default function VideosClient() {
 
   const getThumbnail = (videoUrl: string) => {
     if (videoUrl.includes('cloudinary.com')) {
-      // Cloudinary trick: change extension to .jpg and add start offset
-      // Also ensure it's c_fill and square for the grid
       return videoUrl.replace(/\.[^/.]+$/, ".jpg").replace("/video/upload/", "/video/upload/c_fill,h_400,w_400,so_0/");
     }
-    return null; // For non-cloudinary URLs, we'll fall back to a placeholder icon
+    return null;
   };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url) return;
     try {
-      await addDoc(collection(db, 'saved-videos'), { url, createdAt: new Date().toISOString() });
+      await addDoc(collection(db, 'saved-videos'), { url, createdAt: new Date().toISOString(), pinned: false });
       setUrl('');
     } catch (err) {
       console.error(err);
@@ -72,7 +71,7 @@ export default function VideosClient() {
       });
       const data = await res.json();
       if (data.secure_url) {
-        await addDoc(collection(db, 'saved-videos'), { url: data.secure_url, createdAt: new Date().toISOString() });
+        await addDoc(collection(db, 'saved-videos'), { url: data.secure_url, createdAt: new Date().toISOString(), pinned: false });
       } else {
         throw new Error(data.error?.message || "Upload failed");
       }
@@ -82,6 +81,15 @@ export default function VideosClient() {
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const togglePin = async (id: string, currentPinned: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await updateDoc(doc(db, 'saved-videos', id), { pinned: !currentPinned });
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -180,9 +188,9 @@ export default function VideosClient() {
           {videos.map(item => {
             const thumb = getThumbnail(item.url);
             return (
-              <div
-                key={item.id}
-                className="grid-item"
+              <div 
+                key={item.id} 
+                className={`grid-item ${item.pinned ? 'pinned' : ''}`} 
                 onClick={() => setPlayingVideo(item.url)}
               >
                 {thumb ? (
@@ -192,9 +200,27 @@ export default function VideosClient() {
                     <Play size={24} fill="white" />
                   </div>
                 )}
-                {/* Desktop hover actions */}
+                
+                {item.pinned && (
+                    <div className="pinned-badge">
+                        <Pin size={14} fill="white" />
+                    </div>
+                )}
+
                 <div className="grid-overlay">
-                  <Play size={30} fill="white" />
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <Pin 
+                        size={20} 
+                        style={{ cursor: 'pointer', opacity: item.pinned ? 1 : 0.6 }} 
+                        onClick={(e) => togglePin(item.id, !!item.pinned, e)} 
+                    />
+                    <Play size={30} fill="white" />
+                    <Trash2 
+                        size={20} 
+                        style={{ cursor: 'pointer', opacity: 0.6, color: '#ff4444' }} 
+                        onClick={(e) => deleteVideo(e, item.id)} 
+                    />
+                  </div>
                 </div>
               </div>
             );
@@ -205,19 +231,28 @@ export default function VideosClient() {
           {videos.map(item => {
             const thumb = getThumbnail(item.url);
             return (
-              <div key={item.id} className="glass-card list-item" onClick={() => setPlayingVideo(item.url)}>
+              <div key={item.id} className="glass-card list-item" onClick={() => setPlayingVideo(item.url)} style={{ border: item.pinned ? '1px solid #444' : undefined }}>
                 <div className="list-thumb">
                   {thumb ? (
                     <img src={thumb} alt="Thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <Play size={16} fill="white" />
                   )}
+                  {item.pinned && <div style={{ position: 'absolute', top: '-5px', left: '-5px' }}><Pin size={8} fill="white" /></div>}
                 </div>
                 <div className="list-info">
-                  <div className="list-url">{item.url}</div>
+                  <div className="list-url" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {item.pinned && <Pin size={14} fill="white" />}
+                    {item.url}
+                  </div>
                   <div className="list-date">{new Date(item.createdAt).toLocaleString()}</div>
                 </div>
                 <div className="list-actions">
+                  <Pin 
+                    size={18} 
+                    style={{ cursor: 'pointer', opacity: item.pinned ? 1 : 0.2 }} 
+                    onClick={(e) => togglePin(item.id, !!item.pinned, e)} 
+                  />
                   <Download size={18} className="icon-btn" onClick={(e) => downloadVideo(e, item.url, item.id)} />
                   <Trash2 size={18} className="icon-btn danger" onClick={(e) => deleteVideo(e, item.id)} />
                 </div>
@@ -236,12 +271,12 @@ export default function VideosClient() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <video src={playingVideo} controls autoPlay className="main-player" />
             <div className="modal-actions">
-              <button className="btn-primary" onClick={(e) => {
-                const id = videos.find(v => v.url === playingVideo)?.id || 'download';
-                downloadVideo(e as any, playingVideo, id);
-              }}>
-                <Download size={18} /> DOWNLOAD
-              </button>
+                <button className="btn-primary" onClick={(e) => {
+                    const id = videos.find(v => v.url === playingVideo)?.id || 'download';
+                    downloadVideo(e as any, playingVideo, id);
+                }}>
+                    <Download size={18} /> DOWNLOAD
+                </button>
             </div>
           </div>
         </div>
@@ -314,6 +349,18 @@ export default function VideosClient() {
           position: relative;
           cursor: pointer;
         }
+        .grid-item.pinned {
+            border-color: #555;
+        }
+        .pinned-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            background: rgba(0,0,0,0.5);
+            padding: 4px;
+            border-radius: 4px;
+        }
         .grid-item img {
           width: 100%;
           height: 100%;
@@ -322,15 +369,17 @@ export default function VideosClient() {
         .grid-overlay {
           position: absolute;
           inset: 0;
-          background: rgba(0,0,0,0.4);
+          background: rgba(0,0,0,0.6);
           display: flex;
           align-items: center;
           justify-content: center;
           opacity: 0;
           transition: opacity 0.2s;
+          pointer-events: none;
         }
         .grid-item:hover .grid-overlay {
           opacity: 1;
+          pointer-events: auto;
         }
         .video-placeholder {
           height: 100%;
@@ -360,6 +409,7 @@ export default function VideosClient() {
           display: flex;
           align-items: center;
           justify-content: center;
+          position: relative;
         }
         .list-info {
           flex: 1;
@@ -379,6 +429,7 @@ export default function VideosClient() {
         .list-actions {
           display: flex;
           gap: 1.25rem;
+          align-items: center;
         }
         .icon-btn {
           cursor: pointer;
@@ -442,6 +493,11 @@ export default function VideosClient() {
           }
           .grid-overlay { display: none; }
           .header-actions { margin-bottom: 1rem; }
+          .pinned-badge {
+            top: 5px;
+            left: 5px;
+            padding: 2px;
+          }
         }
       `}</style>
     </div>
