@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { Trash2, ImageIcon, Upload, Download, Loader2 } from 'lucide-react';
+import { Trash2, ImageIcon, Upload, Download, Loader2, LayoutGrid, List } from 'lucide-react';
 
 interface SavedImage {
   id: string;
@@ -15,6 +15,7 @@ export default function ImagesClient() {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const CLOUD_NAME = "dvznt84hj";
@@ -92,20 +93,53 @@ export default function ImagesClient() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 900 }}>IMAGES</h1>
           <p style={{ opacity: 0.6 }}>VISUAL STASH & CLOUD STORAGE</p>
         </div>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="btn-primary"
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-        >
-          {uploading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
-          {uploading ? 'UPLOADING...' : 'UPLOAD'}
-        </button>
+
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className="glass-card" style={{ padding: '0.25rem', display: 'flex', gap: '0.25rem' }}>
+            <button
+              onClick={() => setViewMode('grid')}
+              style={{
+                padding: '0.5rem',
+                background: viewMode === 'grid' ? 'rgba(255,255,255,0.1)' : 'transparent',
+                border: 'none',
+                borderRadius: '0.4rem',
+                color: viewMode === 'grid' ? '#fff' : '#666',
+                cursor: 'pointer'
+              }}
+            >
+              <LayoutGrid size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              style={{
+                padding: '0.5rem',
+                background: viewMode === 'list' ? 'rgba(255,255,255,0.1)' : 'transparent',
+                border: 'none',
+                borderRadius: '0.4rem',
+                color: viewMode === 'list' ? '#fff' : '#666',
+                cursor: 'pointer'
+              }}
+            >
+              <List size={18} />
+            </button>
+          </div>
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            {uploading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
+            {uploading ? 'UPLOADING...' : 'UPLOAD'}
+          </button>
+        </div>
+
         <input
           type="file"
           ref={fileInputRef}
@@ -132,18 +166,18 @@ export default function ImagesClient() {
         </form>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', opacity: 0.5, gridColumn: '1 / -1', padding: '4rem' }}>
-            <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto' }} />
-            <div style={{ marginTop: '1rem' }}>LOADING STASH...</div>
-          </div>
-        ) : images.length === 0 ? (
-          <div style={{ textAlign: 'center', opacity: 0.5, gridColumn: '1 / -1', padding: '4rem', border: '1px dashed #333', borderRadius: '1rem' }}>
-            STASH IS EMPTY
-          </div>
-        ) : (
-          images.map(item => (
+      {loading ? (
+        <div style={{ textAlign: 'center', opacity: 0.5, padding: '4rem' }}>
+          <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto' }} />
+          <div style={{ marginTop: '1rem' }}>LOADING STASH...</div>
+        </div>
+      ) : images.length === 0 ? (
+        <div style={{ textAlign: 'center', opacity: 0.5, padding: '4rem', border: '1px dashed #333', borderRadius: '1rem' }}>
+          STASH IS EMPTY
+        </div>
+      ) : viewMode === 'grid' ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
+          {images.map(item => (
             <div key={item.id} className="glass-card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s' }}>
               <div style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img
@@ -176,9 +210,41 @@ export default function ImagesClient() {
                 </span>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {images.map(item => (
+            <div key={item.id} className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <img
+                src={item.url}
+                alt="Thumbnail"
+                style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', background: '#000' }}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: 0.8 }}>
+                  {item.url}
+                </div>
+                <div style={{ fontSize: '0.65rem', opacity: 0.3 }}>
+                  {new Date(item.createdAt).toLocaleString()}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <Download
+                  size={16}
+                  style={{ cursor: 'pointer', opacity: 0.6 }}
+                  onClick={() => downloadImage(item.url, item.id)}
+                />
+                <Trash2
+                  size={16}
+                  style={{ cursor: 'pointer', opacity: 0.6, color: '#ff4444' }}
+                  onClick={() => deleteImage(item.id)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       <style jsx global>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
