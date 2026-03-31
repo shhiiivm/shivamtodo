@@ -79,7 +79,7 @@ export default function NotepadClient() {
   return (
     <div className="notepad-container">
       {/* Sidebar */}
-      <div className={`sidebar ${activeId ? 'hidden-mobile' : 'visible-mobile'}`}>
+      <div className={`sidebar ${activeId ? 'hidden-mobile' : ''}`}>
         <div className="sidebar-header">
           <h2 className="sidebar-title">NOTES</h2>
           <button className="new-note-btn" onClick={createNote}>
@@ -115,7 +115,7 @@ export default function NotepadClient() {
       </div>
 
       {/* Content Area */}
-      <div className={`editor ${!activeId ? 'visible-mobile' : 'visible-mobile'}`}>
+      <div className={`editor ${activeId ? '' : 'hidden-mobile'}`}>
         {!activeId ? (
           <div className="editor-inner">
             <div className="editor-header">
@@ -527,7 +527,7 @@ export default function NotepadClient() {
           /* Sidebar mobile */
           .sidebar {
             padding: 1rem;
-            min-height: calc(100vh - 80px);
+            min-height: auto;
             border-right: none;
           }
           .sidebar-header {
