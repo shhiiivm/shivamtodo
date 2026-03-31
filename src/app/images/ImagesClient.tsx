@@ -233,11 +233,10 @@ export default function ImagesClient() {
             <div key={item.id} className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', border: item.pinned ? '1px solid #444' : undefined }}>
               <div style={{ position: 'relative' }}>
                 <img
-                    src={item.url}
-                    alt="Thumbnail"
-                    style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', background: '#000' }}
+                  src={item.url}
+                  alt="Thumbnail"
+                  style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', background: '#000' }}
                 />
-                {item.pinned && <div style={{ position: 'absolute', -top: '5px', -left: '5px' }}><Pin size={8} fill="white" /></div>}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -266,11 +265,11 @@ export default function ImagesClient() {
                 />
               </div>
             </div>
-      ))}
-    </div>
-  )
-}
-<style jsx global>{`
+          ))}
+        </div>
+      )}
+
+      <style jsx global>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
@@ -291,11 +290,8 @@ export default function ImagesClient() {
           .grid-item {
             border-radius: 2px !important;
           }
-          .card-actions {
-            display: none !important;
-          }
         }
       `}</style>
-    </div >
+    </div>
   );
 }
