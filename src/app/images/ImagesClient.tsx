@@ -93,11 +93,7 @@ export default function ImagesClient() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 900 }}>IMAGES</h1>
-          <p style={{ opacity: 0.6 }}>VISUAL STASH & CLOUD STORAGE</p>
-        </div>
+      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
 
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <div className="glass-card" style={{ padding: '0.25rem', display: 'flex', gap: '0.25rem' }}>
