@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { Trash2, Film, Upload, Download, Loader2, LayoutGrid, List, Play } from 'lucide-react';
+import { Trash2, Film, Upload, Download, Loader2, LayoutGrid, List, Play, X } from 'lucide-react';
 
 interface SavedVideo {
   id: string;
@@ -16,6 +16,7 @@ export default function VideosClient() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [playingVideo, setPlayingVideo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const CLOUD_NAME = "dvznt84hj";
@@ -29,6 +30,15 @@ export default function VideosClient() {
     });
     return () => unsub();
   }, []);
+
+  const getThumbnail = (videoUrl: string) => {
+    if (videoUrl.includes('cloudinary.com')) {
+      // Cloudinary trick: change extension to .jpg and add start offset
+      // Also ensure it's c_fill and square for the grid
+      return videoUrl.replace(/\.[^/.]+$/, ".jpg").replace("/video/upload/", "/video/upload/c_fill,h_400,w_400,so_0/");
+    }
+    return null; // For non-cloudinary URLs, we'll fall back to a placeholder icon
+  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,8 +56,8 @@ export default function VideosClient() {
     if (!file) return;
 
     if (file.size > 100 * 1024 * 1024) {
-        alert("File too large. Maximum size is 100MB.");
-        return;
+      alert("File too large. Maximum size is 100MB.");
+      return;
     }
 
     setUploading(true);
@@ -64,7 +74,7 @@ export default function VideosClient() {
       if (data.secure_url) {
         await addDoc(collection(db, 'saved-videos'), { url: data.secure_url, createdAt: new Date().toISOString() });
       } else {
-          throw new Error(data.error?.message || "Upload failed");
+        throw new Error(data.error?.message || "Upload failed");
       }
     } catch (err: any) {
       console.error("Upload failed:", err);
@@ -75,13 +85,15 @@ export default function VideosClient() {
     }
   };
 
-  const deleteVideo = async (id: string) => {
+  const deleteVideo = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     if (window.confirm("Delete this video?")) {
       await deleteDoc(doc(db, 'saved-videos', id));
     }
   };
 
-  const downloadVideo = async (videoUrl: string, id: string) => {
+  const downloadVideo = async (e: React.MouseEvent, videoUrl: string, id: string) => {
+    e.stopPropagation();
     try {
       const response = await fetch(videoUrl);
       const blob = await response.blob();
@@ -99,23 +111,21 @@ export default function VideosClient() {
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '2px' }}>VIDEOS</h1>
+    <div className="container">
+      <div className="header-actions">
+        <h1 className="title">VIDEOS</h1>
 
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div className="glass-card" style={{ padding: '0.25rem', display: 'flex', gap: '0.25rem' }}>
+        <div className="controls">
+          <div className="glass-card mode-toggle">
             <button
-               className="icon-toggle"
-               onClick={() => setViewMode('grid')}
-               style={{ background: viewMode === 'grid' ? 'rgba(255,255,255,0.1)' : 'transparent', color: viewMode === 'grid' ? '#fff' : '#666' }}
+              className={`icon-toggle ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
             >
               <LayoutGrid size={18} />
             </button>
             <button
-               className="icon-toggle"
-               onClick={() => setViewMode('list')}
-               style={{ background: viewMode === 'list' ? 'rgba(255,255,255,0.1)' : 'transparent', color: viewMode === 'list' ? '#fff' : '#666' }}
+              className={`icon-toggle ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
             >
               <List size={18} />
             </button>
@@ -125,10 +135,9 @@ export default function VideosClient() {
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
             className="btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
             {uploading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
-            {uploading ? 'UPLOADING...' : 'UPLOAD VIDEO'}
+            {uploading ? 'UPLOADING...' : 'UPLOAD'}
           </button>
         </div>
 
@@ -141,123 +150,291 @@ export default function VideosClient() {
         />
       </div>
 
-      <div className="glass-card" style={{ marginBottom: '2rem' }}>
-        <form onSubmit={handleAdd} style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+      <div className="glass-card url-form">
+        <form onSubmit={handleAdd}>
           <input
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="OR PASTE VIDEO URL..."
+            placeholder="PASTE VIDEO URL..."
             className="input-glass"
-            style={{ flex: 1 }}
             required
           />
-          <button type="submit" className="btn-primary" style={{ whiteSpace: 'nowrap' }}>
-            ADD URL
+          <button type="submit" className="btn-primary">
+            ADD
           </button>
         </form>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', opacity: 0.5, padding: '4rem' }}>
-          <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto' }} />
-          <div style={{ marginTop: '1rem' }}>LOADING...</div>
+        <div className="loading-state">
+          <Loader2 size={32} className="animate-spin" />
+          <p>LOADING...</p>
         </div>
       ) : videos.length === 0 ? (
-        <div style={{ textAlign: 'center', opacity: 0.5, padding: '4rem', border: '1px dashed #333', borderRadius: '1rem' }}>
+        <div className="empty-state">
           NO VIDEOS YET
         </div>
       ) : viewMode === 'grid' ? (
         <div className="video-grid">
-          {videos.map(item => (
-            <div key={item.id} className="glass-card grid-item" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#000' }}>
-                <video
-                  src={item.url}
-                  className="w-full h-full object-cover"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              </div>
-              <div className="card-actions" style={{ padding: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)' }}>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <Download
-                    size={16}
-                    style={{ cursor: 'pointer', opacity: 0.6 }}
-                    onClick={() => downloadVideo(item.url, item.id)}
-                  />
-                  <Trash2
-                    size={16}
-                    style={{ cursor: 'pointer', opacity: 0.6, color: '#ff4444' }}
-                    onClick={() => deleteVideo(item.id)}
-                  />
+          {videos.map(item => {
+            const thumb = getThumbnail(item.url);
+            return (
+              <div
+                key={item.id}
+                className="grid-item"
+                onClick={() => setPlayingVideo(item.url)}
+              >
+                {thumb ? (
+                  <img src={thumb} alt="Preview" />
+                ) : (
+                  <div className="video-placeholder">
+                    <Play size={24} fill="white" />
+                  </div>
+                )}
+                {/* Desktop hover actions */}
+                <div className="grid-overlay">
+                  <Play size={30} fill="white" />
                 </div>
-                <span style={{ fontSize: '0.6rem', opacity: 0.3, fontWeight: 700 }}>
-                  {new Date(item.createdAt).toLocaleDateString()}
-                </span>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="video-list">
           {videos.map(item => (
-            <div key={item.id} className="glass-card" style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-              <div style={{ width: '80px', height: '45px', background: '#111', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                 <Play size={16} fill="white" />
+            <div key={item.id} className="glass-card list-item" onClick={() => setPlayingVideo(item.url)}>
+              <div className="list-thumb">
+                <Play size={16} fill="white" />
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600 }}>
-                  {item.url}
-                </div>
-                <div style={{ fontSize: '0.7rem', opacity: 0.3 }}>
-                  {new Date(item.createdAt).toLocaleString()}
-                </div>
+              <div className="list-info">
+                <div className="list-url">{item.url}</div>
+                <div className="list-date">{new Date(item.createdAt).toLocaleString()}</div>
               </div>
-              <div style={{ display: 'flex', gap: '1.25rem' }}>
-                <Download
-                  size={18}
-                  style={{ cursor: 'pointer', opacity: 0.6 }}
-                  onClick={() => downloadVideo(item.url, item.id)}
-                />
-                <Trash2
-                  size={18}
-                  style={{ cursor: 'pointer', opacity: 0.6, color: '#ff4444' }}
-                  onClick={() => deleteVideo(item.id)}
-                />
+              <div className="list-actions">
+                <Download size={18} className="icon-btn" onClick={(e) => downloadVideo(e, item.url, item.id)} />
+                <Trash2 size={18} className="icon-btn danger" onClick={(e) => deleteVideo(e, item.id)} />
               </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* Video Player Modal */}
+      {playingVideo && (
+        <div className="modal-overlay" onClick={() => setPlayingVideo(null)}>
+          <button className="close-btn" onClick={() => setPlayingVideo(null)}>
+            <X size={32} />
+          </button>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <video src={playingVideo} controls autoPlay className="main-player" />
+            <div className="modal-actions">
+              <button className="btn-primary" onClick={(e) => {
+                const id = videos.find(v => v.url === playingVideo)?.id || 'download';
+                downloadVideo(e as any, playingVideo, id);
+              }}>
+                <Download size={18} /> DOWNLOAD
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
-        .video-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 1.5rem;
+        .container {
+          padding: 2rem;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        .header-actions {
+          margin-bottom: 2rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+        .title {
+          font-size: 2.5rem;
+          font-weight: 900;
+          letter-spacing: 2px;
+        }
+        .controls {
+          display: flex;
+          gap: 1rem;
+          align-items: center;
+        }
+        .mode-toggle {
+          padding: 0.25rem;
+          display: flex;
+          gap: 0.25rem;
         }
         .icon-toggle {
           padding: 0.5rem;
+          background: transparent;
           border: none;
           border-radius: 0.4rem;
+          color: #666;
           cursor: pointer;
+          transition: all 0.2s;
+        }
+        .icon-toggle.active {
+          background: rgba(255,255,255,0.1);
+          color: #fff;
+        }
+        .url-form {
+          margin-bottom: 2rem;
+        }
+        .url-form form {
+          display: flex;
+          gap: 1rem;
+        }
+        .loading-state, .empty-state {
+          text-align: center;
+          padding: 4rem;
+          opacity: 0.5;
+        }
+        .video-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 1rem;
+        }
+        .grid-item {
+          aspect-ratio: 1;
+          background: #0a0a0a;
+          border: 1px solid #1a1a1a;
+          overflow: hidden;
+          position: relative;
+          cursor: pointer;
+        }
+        .grid-item img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .grid-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.4);
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s;
+          opacity: 0;
+          transition: opacity 0.2s;
         }
+        .grid-item:hover .grid-overlay {
+          opacity: 1;
+        }
+        .video-placeholder {
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #111;
+        }
+
+        .video-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .list-item {
+          padding: 0.75rem 1.25rem;
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          cursor: pointer;
+        }
+        .list-thumb {
+          width: 80px;
+          height: 45px;
+          background: #111;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .list-info {
+          flex: 1;
+          min-width: 0;
+        }
+        .list-url {
+          font-size: 0.9rem;
+          font-weight: 600;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .list-date {
+          font-size: 0.7rem;
+          opacity: 0.3;
+        }
+        .list-actions {
+          display: flex;
+          gap: 1.25rem;
+        }
+        .icon-btn {
+          cursor: pointer;
+          opacity: 0.5;
+          transition: opacity 0.2s;
+        }
+        .icon-btn:hover {
+          opacity: 1;
+        }
+        .icon-btn.danger:hover {
+          color: #ff4444;
+        }
+
+        .modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.95);
+          z-index: 2000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+        }
+        .close-btn {
+          position: absolute;
+          top: 2rem;
+          right: 2rem;
+          background: transparent;
+          border: none;
+          color: white;
+          cursor: pointer;
+          z-index: 2001;
+        }
+        .modal-content {
+          width: 100%;
+          max-width: 900px;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .main-player {
+          width: 100%;
+          max-height: 80vh;
+          background: #000;
+          box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+        }
+
         @media (max-width: 640px) {
+          .container { padding: 1rem; }
+          .title { font-size: 1.8rem; }
           .video-grid {
             grid-template-columns: repeat(3, 1fr);
-            gap: 0.2rem;
-            padding: 0.5rem;
+            gap: 2px;
           }
           .grid-item {
-            border-radius: 2px !important;
+            border: none;
           }
-          .card-actions {
-            display: none !important;
-          }
+          .grid-overlay { display: none; }
+          .header-actions { margin-bottom: 1rem; }
         }
       `}</style>
     </div>
