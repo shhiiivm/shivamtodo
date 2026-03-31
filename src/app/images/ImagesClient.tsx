@@ -176,9 +176,9 @@ export default function ImagesClient() {
           STASH IS EMPTY
         </div>
       ) : viewMode === 'grid' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
+        <div className="image-grid">
           {images.map(item => (
-            <div key={item.id} className="glass-card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s' }}>
+            <div key={item.id} className="glass-card grid-item" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s' }}>
               <div style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img
                   src={item.url}
@@ -252,6 +252,23 @@ export default function ImagesClient() {
         }
         .animate-spin {
           animation: spin 1s linear infinite;
+        }
+        .image-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 1.5rem;
+        }
+        @media (max-width: 640px) {
+          .image-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.2rem;
+          }
+          .grid-item {
+            border-radius: 2px !important;
+          }
+          .card-actions {
+            display: none !important;
+          }
         }
       `}</style>
     </div>
