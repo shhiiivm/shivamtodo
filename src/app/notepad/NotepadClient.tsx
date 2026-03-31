@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, doc, onSnapshot, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { Plus, Trash2, ChevronLeft, Save } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, Save, Search } from 'lucide-react';
 
 interface Note {
   id: string;
@@ -17,25 +17,21 @@ export default function NotepadClient() {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Load all notes list
   useEffect(() => {
     const q = query(collection(db, 'notes'), orderBy('updatedAt', 'desc'));
     const unsub = onSnapshot(q, (snapshot) => {
       const notesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Note));
       setNotes(notesData);
-      if (notesData.length > 0 && !activeId) {
-        // Don't auto-select to avoid overwriting content
-      }
       setLoading(false);
     }, (error) => {
       console.error("FIRESTORE ERROR:", error);
       setLoading(false);
     });
     return () => unsub();
-  }, [activeId]);
+  }, []);
 
-  // Load active note content
   useEffect(() => {
     if (!activeId) {
       setContent('');
@@ -76,156 +72,133 @@ export default function NotepadClient() {
     }
   };
 
+  const filteredNotes = notes.filter(n => 
+    n.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    n.text.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="notepad-container">
-      {/* Sidebar - desktop only, hidden on mobile */}
-      <div className={`sidebar hidden-mobile`}>
+      {/* Sidebar - Desktop Only */}
+      <div className="sidebar desktop-only">
         <div className="sidebar-header">
-          <h2 className="sidebar-title">NOTES</h2>
-          <button className="new-note-btn" onClick={createNote}>
-            <Plus size={16} />
-            <span className="new-note-label">NEW</span>
-          </button>
+          <h2 className="sidebar-title">SHIVAM</h2>
+          <Plus size={18} className="icon-btn" onClick={createNote} />
         </div>
-
+        <div className="search-container">
+            <Search size={14} style={{ opacity: 0.4 }} />
+            <input 
+                type="text" 
+                placeholder="SEARCH..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+            />
+        </div>
         <div className="notes-list">
-          {notes.map(note => (
+          {filteredNotes.map(note => (
             <div
               key={note.id}
               onClick={() => setActiveId(note.id)}
               className={`note-item ${activeId === note.id ? 'active' : ''}`}
             >
-              <span className="note-title">
-                {note.id.replace(/-/g, ' ')}
-              </span>
-              <Trash2 size={14} className="delete-icon" onClick={(e) => deleteNote(note.id, e)} />
+              <span className="note-title">{note.id.replace(/-/g, ' ')}</span>
+              <Trash2 size={12} className="delete-icon" onClick={(e) => deleteNote(note.id, e)} />
             </div>
           ))}
-          {loading && <p style={{ opacity: 0.5, fontSize: '0.75rem', padding: '0.5rem' }}>LOADING...</p>}
-          {!loading && notes.length === 0 && (
-            <div className="empty-state">
-              <p>No notes yet</p>
-              <button className="new-note-btn" onClick={createNote} style={{ marginTop: '0.5rem' }}>
-                <Plus size={14} />
-                <span>Create one</span>
-              </button>
-            </div>
-          )}
+          {loading && <p className="loading-text">LOADING...</p>}
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className={`editor ${activeId ? '' : ''}`}>
+      {/* Main Area */}
+      <div className="main-content">
         {!activeId ? (
-          <div className="editor-inner">
-            <div className="editor-header">
-              <div className="desktop-only" style={{ visibility: 'hidden' }}>spacer</div>
-              <div style={{ textAlign: 'center' }}>
-                <h1 className="recent-title">RECENT</h1>
-                <p className="recent-subtitle">SELECT A NOTE OR CREATE A NEW ONE</p>
-              </div>
-              <div className="desktop-only view-toggles">
-                <span style={{ fontSize: '0.7rem', fontWeight: 800, opacity: 0.5 }}>VIEW:</span>
-                {[1, 2, 3, 4].map(num => (
-                  <button
-                    key={num}
-                    onClick={() => setViewCount(num)}
-                    className={`view-btn ${viewCount === num ? 'active' : ''}`}
-                  >
-                    {num}
+          <div className="grid-view">
+            <div className="grid-header">
+               <div className="mobile-header">
+                  <h1 className="mobile-title">SHIVAM</h1>
+                  <button className="new-note-btn-mobile" onClick={createNote}>
+                    <Plus size={18} />
                   </button>
-                ))}
-              </div>
+               </div>
+               
+               <div className="desktop-header desktop-only">
+                  <h1 className="recent-title">RECENT</h1>
+                  <div className="view-toggles">
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, opacity: 0.5 }}>VIEW:</span>
+                    {[1, 2, 3, 4].map(num => (
+                      <button
+                        key={num}
+                        onClick={() => setViewCount(num)}
+                        className={`view-btn ${viewCount === num ? 'active' : ''}`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+               </div>
+            </div>
+
+            <div className="search-container-mobile mobile-only">
+                <Search size={18} style={{ opacity: 0.4 }} />
+                <input 
+                    type="text" 
+                    placeholder="SEARCH NOTES..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="search-input-mobile"
+                />
             </div>
 
             <div className="notes-grid" style={{
               gridTemplateColumns: viewCount > 1 ? `repeat(${viewCount}, 1fr)` : undefined,
-              maxWidth: viewCount > 1 ? '100%' : '1200px',
             }}>
-              {notes.slice(0, viewCount > 1 ? viewCount : 10).map(note => (
+              {filteredNotes.map(note => (
                 <div
                   key={note.id}
                   className="note-card"
-                  style={{
-                    minHeight: viewCount > 1 ? '70vh' : undefined,
-                  }}
                   onClick={() => setActiveId(note.id)}
                 >
                   <div className="note-card-header">
                     <h3 className="note-card-title">{note.id.replace(/-/g, ' ')}</h3>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <Trash2
-                        size={14}
+                    <Trash2
+                        size={16}
                         className="delete-icon-card"
                         onClick={(e) => { e.stopPropagation(); deleteNote(note.id, e); }}
-                        style={{ opacity: 0.4 }}
                       />
-                      <div
-                        onClick={(e) => { e.stopPropagation(); setActiveId(note.id); }}
-                        className="btn-primary"
-                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.6rem' }}
-                      >
-                        OPEN
-                      </div>
-                    </div>
                   </div>
-
-                  {viewCount > 1 ? (
-                    <textarea
-                      defaultValue={note.text}
-                      onClick={(e) => e.stopPropagation()}
-                      onBlur={async (e) => {
-                        const newText = e.target.value;
-                        if (newText !== note.text) {
-                          await setDoc(doc(db, 'notes', note.id), { text: newText, updatedAt: new Date() });
-                        }
-                      }}
-                      placeholder="EMPTY..."
-                      className="input-glass note-textarea"
-                    />
-                  ) : (
-                    <div className="note-preview">
-                      <p>{note.text || 'EMPTY NOTE...'}</p>
-                    </div>
-                  )}
+                  <div className="note-preview">
+                    <p>{note.text || 'EMPTY NOTE...'}</p>
+                  </div>
                 </div>
               ))}
-
-              {viewCount === 1 && (
-                <div
-                  onClick={createNote}
-                  className="note-card new-card"
-                >
-                  <Plus size={28} style={{ marginBottom: '0.5rem' }} />
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>NEW NOTE</span>
-                </div>
-              )}
+              <div onClick={createNote} className="note-card new-card">
+                <Plus size={32} />
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, marginTop: '0.5rem' }}>NEW NOTE</span>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="active-editor">
-            <div className="active-editor-header">
+          <div className="editor-view">
+            <div className="editor-header-bar">
               <div className="header-left">
-                <button
-                  onClick={() => setActiveId(null)}
-                  className="back-btn"
-                >
-                  <ChevronLeft size={18} />
-                  <span className="back-label">BACK</span>
+                <button onClick={() => setActiveId(null)} className="back-btn">
+                  <ChevronLeft size={20} />
+                  <span className="back-text">BACK</span>
                 </button>
                 <h1 className="active-note-title">{activeId.replace(/-/g, ' ')}</h1>
               </div>
               <button onClick={handleSave} className="save-btn" disabled={saving}>
-                <Save size={16} />
-                <span className="save-label">{saving ? 'SAVING...' : 'SAVE'}</span>
+                <Save size={18} />
+                <span>{saving ? '...' : 'SAVE'}</span>
               </button>
             </div>
 
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="TYPE HERE..."
-              className="input-glass main-textarea"
+              placeholder="TYPE SOMETHING..."
+              className="main-editor-textarea"
             />
           </div>
         )}
@@ -233,134 +206,140 @@ export default function NotepadClient() {
 
       <style jsx>{`
         .notepad-container {
-          display: grid;
-          grid-template-columns: 260px 1fr;
-          min-height: calc(100vh - 80px);
+          display: flex;
+          height: calc(100vh - 64px);
+          background: black;
+          color: white;
+          overflow: hidden;
         }
 
         /* Sidebar */
         .sidebar {
+          width: 280px;
           border-right: 1px solid #1a1a1a;
-          padding: 1.25rem;
+          display: flex;
+          flex-direction: column;
           background: #050505;
-          overflow-y: auto;
         }
         .sidebar-header {
+          padding: 1.5rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 1.25rem;
         }
         .sidebar-title {
-          font-size: 0.85rem;
+          font-size: 0.9rem;
           font-weight: 900;
           letter-spacing: 2px;
           margin: 0;
         }
-        .new-note-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.3rem;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid #333;
-          color: white;
-          padding: 0.4rem 0.7rem;
-          font-size: 0.7rem;
-          font-weight: 700;
+        .icon-btn {
           cursor: pointer;
-          border-radius: 4px;
-          transition: background 0.2s;
-        }
-        .new-note-btn:hover {
-          background: rgba(255,255,255,0.12);
-        }
-        .notes-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.3rem;
-        }
-        .note-item {
-          padding: 0.7rem 0.75rem;
-          border: 1px solid #1a1a1a;
-          border-radius: 4px;
-          cursor: pointer;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          text-transform: uppercase;
-          font-size: 0.75rem;
-          letter-spacing: 1px;
-          transition: all 0.15s ease;
-        }
-        .note-item:hover {
-          border-color: #444;
-          background: rgba(255,255,255,0.03);
-        }
-        .note-item.active {
-          border-color: white;
-          background: #111;
-        }
-        .note-title {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          flex: 1;
-          margin-right: 0.5rem;
-        }
-        .delete-icon {
-          opacity: 0.3;
-          cursor: pointer;
-          flex-shrink: 0;
+          opacity: 0.6;
           transition: opacity 0.2s;
         }
-        .delete-icon:hover {
-          opacity: 0.8;
-          color: #ff4444;
-        }
-        .empty-state {
-          text-align: center;
-          padding: 2rem 1rem;
-          opacity: 0.5;
-          font-size: 0.8rem;
+        .icon-btn:hover {
+          opacity: 1;
         }
 
-        /* Editor */
-        .editor {
-          background: black;
+        /* Search */
+        .search-container {
+          padding: 0 1.5rem 1rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          border-bottom: 1px solid #1a1a1a;
+        }
+        .search-input {
+          background: transparent;
+          border: none;
+          color: white;
+          font-size: 0.75rem;
+          font-weight: 600;
+          width: 100%;
+          outline: none;
+        }
+
+        .notes-list {
+          flex: 1;
           overflow-y: auto;
+          padding: 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
         }
-        .editor-inner {
-          padding: 2rem;
-        }
-        .editor-header {
-          margin-bottom: 2rem;
+        .note-item {
+          padding: 0.75rem;
+          border: 1px solid #111;
+          border-radius: 4px;
+          cursor: pointer;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          flex-wrap: wrap;
-          gap: 1rem;
+          transition: all 0.2s;
+        }
+        .note-item:hover {
+          background: #111;
+          border-color: #333;
+        }
+        .note-item.active {
+          background: #151515;
+          border-color: white;
+        }
+        .note-title {
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .delete-icon {
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+        .note-item:hover .delete-icon {
+          opacity: 0.4;
+        }
+        .delete-icon:hover {
+          opacity: 1 !important;
+          color: #ff4444;
+        }
+
+        /* Main Content */
+        .main-content {
+          flex: 1;
+          overflow-y: auto;
+          position: relative;
+        }
+
+        /* Grid View */
+        .grid-view {
+          padding: 2rem;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        .desktop-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
         }
         .recent-title {
-          font-size: 2.4rem;
+          font-size: 2.5rem;
           font-weight: 900;
           letter-spacing: 4px;
-          margin: 0;
-        }
-        .recent-subtitle {
-          opacity: 0.5;
-          font-size: 0.8rem;
-          margin: 0.25rem 0 0;
         }
         .view-toggles {
           display: flex;
-          gap: 0.5rem;
           align-items: center;
+          gap: 0.5rem;
         }
         .view-btn {
           background: transparent;
           color: white;
           border: 1px solid white;
-          padding: 0.3rem 0.6rem;
+          padding: 0.4rem 0.8rem;
           font-size: 0.8rem;
           font-weight: 900;
           cursor: pointer;
@@ -370,278 +349,213 @@ export default function NotepadClient() {
           color: black;
         }
 
-        /* Notes Grid */
         .notes-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 1rem;
-          margin: 0 auto;
+          gap: 1.5rem;
         }
         .note-card {
+          background: #0a0a0a;
+          border: 1px solid #1a1a1a;
+          border-radius: 12px;
+          padding: 1.5rem;
+          cursor: pointer;
+          transition: all 0.2s;
           display: flex;
           flex-direction: column;
-          background: rgba(255,255,255,0.03);
-          border: 1px solid #1a1a1a;
-          border-radius: 8px;
-          padding: 1.25rem;
-          cursor: pointer;
-          transition: border-color 0.2s;
-          min-height: 140px;
+          min-height: 180px;
         }
         .note-card:hover {
           border-color: #444;
+          transform: translateY(-2px);
+          background: #0d0d0d;
         }
         .note-card-header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
-          margin-bottom: 0.75rem;
+          align-items: flex-start;
+          margin-bottom: 1rem;
         }
         .note-card-title {
-          font-size: 0.85rem;
+          font-size: 0.9rem;
           font-weight: 900;
           text-transform: uppercase;
           margin: 0;
+          letter-spacing: 1px;
         }
-        .note-textarea {
-          flex: 1;
-          padding: 1rem;
-          font-family: monospace;
-          font-size: 0.9rem;
-          resize: none;
-          background-color: rgba(255,255,255,0.03);
-          border: 1px solid #222;
-          line-height: 1.4;
+        .delete-icon-card {
+           opacity: 0.3;
+           transition: opacity 0.2s;
+        }
+        .note-card:hover .delete-icon-card {
+            opacity: 0.6;
+        }
+        .delete-icon-card:hover {
+            opacity: 1 !important;
+            color: #ff4444;
         }
         .note-preview p {
-          opacity: 0.4;
           font-size: 0.85rem;
-          line-height: 1.5;
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
+          opacity: 0.5;
+          line-height: 1.6;
           margin: 0;
+          display: -webkit-box;
+          -webkit-line-clamp: 4;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
         .new-card {
-          align-items: center;
-          justify-content: center;
           border-style: dashed;
           border-color: #333;
+          align-items: center;
+          justify-content: center;
           opacity: 0.6;
-          min-height: 140px;
         }
         .new-card:hover {
           opacity: 1;
-          border-color: #666;
         }
 
-        /* Active Editor */
-        .active-editor {
+        /* Editor View */
+        .editor-view {
           height: 100%;
           display: flex;
           flex-direction: column;
-          padding: 1.25rem;
         }
-        .active-editor-header {
+        .editor-header-bar {
+          padding: 1.5rem 2rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 1rem;
-          gap: 0.75rem;
+          border-bottom: 1px solid #1a1a1a;
         }
         .header-left {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          min-width: 0;
+          gap: 1.5rem;
         }
         .back-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          background: none;
+          background: transparent;
           border: 1px solid #333;
           color: white;
-          padding: 0.45rem 0.7rem;
-          font-size: 0.7rem;
+          padding: 0.5rem 1rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
           font-weight: 800;
+          font-size: 0.75rem;
           cursor: pointer;
-          border-radius: 4px;
-          flex-shrink: 0;
-          transition: border-color 0.2s;
-        }
-        .back-btn:hover {
-          border-color: #666;
+          border-radius: 6px;
         }
         .active-note-title {
-          font-size: 1.3rem;
+          font-size: 1.5rem;
           font-weight: 900;
           text-transform: uppercase;
           margin: 0;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
         }
         .save-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
           background: white;
           color: black;
           border: none;
-          padding: 0.5rem 1.2rem;
-          font-size: 0.75rem;
-          font-weight: 800;
+          padding: 0.6rem 1.5rem;
+          font-weight: 900;
+          font-size: 0.8rem;
           cursor: pointer;
-          border-radius: 4px;
-          flex-shrink: 0;
-          transition: opacity 0.2s;
-        }
-        .save-btn:disabled {
-          opacity: 0.5;
-        }
-        .main-textarea {
-          flex: 1;
-          min-height: 65vh;
-          padding: 1.5rem;
-          font-family: monospace;
-          font-size: 1rem;
-          resize: none;
-          background-color: #0a0a0a;
-          color: white;
-          border: 1px solid #222;
-          line-height: 1.6;
           border-radius: 6px;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
-        .mobile-only-btn {
+        .main-editor-textarea {
+          flex: 1;
+          background: transparent;
+          border: none;
+          color: white;
+          padding: 3rem;
+          font-size: 1.1rem;
+          font-family: inherit;
+          line-height: 1.8;
+          resize: none;
+          outline: none;
+        }
+
+        .mobile-header, .mobile-only, .search-container-mobile {
           display: none;
         }
 
-        /* ============ MOBILE ============ */
         @media (max-width: 768px) {
-          .notepad-container {
-            grid-template-columns: 1fr;
+          .desktop-only {
+            display: none;
           }
-          .hidden-mobile {
-            display: none !important;
+          .mobile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
           }
-          .visible-mobile {
-            display: flex !important;
-            flex-direction: column;
-            width: 100%;
-          }
-
-          /* Sidebar mobile */
-          .sidebar {
-            padding: 1rem;
-            min-height: auto;
-            border-right: none;
-          }
-          .sidebar-header {
-            margin-bottom: 1rem;
-          }
-          .note-item {
-            padding: 0.85rem 0.75rem;
-            font-size: 0.8rem;
-          }
-
-          /* Editor mobile */
-          .editor {
-            padding: 0;
-          }
-          .editor-inner {
-            padding: 1rem !important;
-          }
-          .editor-header {
-            justify-content: center;
-            margin-bottom: 1.25rem;
-          }
-          .recent-title {
-            font-size: 1.6rem;
+          .mobile-title {
+            font-size: 1.5rem;
+            font-weight: 900;
             letter-spacing: 2px;
           }
-          .recent-subtitle {
-            font-size: 0.7rem;
+          .new-note-btn-mobile {
+            background: #111;
+            border: 1px solid #333;
+            color: white;
+            padding: 0.6rem;
+            border-radius: 50%;
+            cursor: pointer;
           }
-          .view-toggles {
-            display: none !important;
+          .mobile-only {
+            display: flex;
           }
-          .desktop-only {
-            display: none !important;
+          .search-container-mobile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: #111;
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            margin: 0 1rem 1.5rem 1rem;
+            border: 1px solid #222;
           }
-
-          /* Notes grid mobile */
-          .notes-grid {
-            grid-template-columns: 1fr !important;
-            gap: 0.75rem;
+          .search-input-mobile {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            width: 100%;
+            outline: none;
           }
-          .note-card {
-            min-height: 100px !important;
+          .grid-view {
             padding: 1rem;
           }
-          .new-card {
-            min-height: 80px !important;
+          .notes-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
           }
-
-          /* Active editor mobile */
-          .active-editor {
-            padding: 0.75rem;
+          .note-card {
+            min-height: 120px;
+            padding: 1.25rem;
           }
-          .active-editor-header {
-            margin-bottom: 0.75rem;
+          .editor-header-bar {
+            padding: 1rem;
+          }
+          .header-left {
+            gap: 0.75rem;
           }
           .back-btn {
-            padding: 0.4rem 0.5rem;
+            padding: 0.45rem;
           }
-          .back-label {
+          .back-text {
             display: none;
           }
           .active-note-title {
             font-size: 1rem;
           }
-          .save-btn {
-            padding: 0.45rem 0.8rem;
+          .main-editor-textarea {
+            padding: 1.5rem;
+            font-size: 1rem;
           }
-          .save-label {
-            font-size: 0.7rem;
-          }
-          .main-textarea {
-            min-height: calc(100vh - 160px);
-            padding: 1rem;
-            font-size: 0.9rem;
-            border-radius: 4px;
-          }
-          .mobile-only-btn {
-            display: inline-block;
-          }
-          .new-note-label {
-            display: none;
-          }
-        }
-
-        /* Small mobile */
-        @media (max-width: 400px) {
-          .active-note-title {
-            font-size: 0.85rem;
-          }
-          .main-textarea {
-            padding: 0.75rem;
-            font-size: 0.85rem;
-          }
-          .note-card {
-            padding: 0.75rem;
-          }
-        }
-
-        .delete-icon-card {
-            opacity: 0.4;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .delete-icon-card:hover {
-            opacity: 1 !important;
-            color: #ff4444;
         }
       `}</style>
     </div>
