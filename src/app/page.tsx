@@ -1,4 +1,4 @@
-import { Edit3, Link as LinkIcon, Image as ImageIcon, Send } from 'lucide-react';
+import { Edit3, Link as LinkIcon, Image as ImageIcon, Film } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Home() {
@@ -21,7 +21,7 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
       />
-      
+
       <section style={{
         display: 'flex',
         flexDirection: 'column',
@@ -70,6 +70,20 @@ export default function Home() {
                 <ImageIcon size={24} />
               </div>
               <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>IMAGES</h3>
+              <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              </p>
+              <div className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                OPEN
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/videos" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="glass-card">
+              <div style={{ marginBottom: '1rem' }}>
+                <Film size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>VIDEOS</h3>
               <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
               </p>
               <div className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
