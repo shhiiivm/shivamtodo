@@ -1,14 +1,13 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { Trash2, ImageIcon, Upload, Download, Loader2, LayoutGrid, List, Pin } from 'lucide-react';
+import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { Trash2, ImageIcon, Upload, Download, Loader2, LayoutGrid, List } from 'lucide-react';
 
 interface SavedImage {
   id: string;
   url: string;
   createdAt: string;
-  pinned?: boolean;
 }
 
 export default function ImagesClient() {
@@ -23,7 +22,7 @@ export default function ImagesClient() {
   const UPLOAD_PRESET = "shivamtodo";
 
   useEffect(() => {
-    const q = query(collection(db, 'saved-images'), orderBy('pinned', 'desc'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'saved-images'), orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, (snapshot) => {
       setImages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedImage)));
       setLoading(false);
@@ -35,7 +34,7 @@ export default function ImagesClient() {
     e.preventDefault();
     if (!url) return;
     try {
-      await addDoc(collection(db, 'saved-images'), { url, createdAt: new Date().toISOString(), pinned: false });
+      await addDoc(collection(db, 'saved-images'), { url, createdAt: new Date().toISOString() });
       setUrl('');
     } catch (err) {
       console.error(err);
@@ -58,7 +57,7 @@ export default function ImagesClient() {
       });
       const data = await res.json();
       if (data.secure_url) {
-        await addDoc(collection(db, 'saved-images'), { url: data.secure_url, createdAt: new Date().toISOString(), pinned: false });
+        await addDoc(collection(db, 'saved-images'), { url: data.secure_url, createdAt: new Date().toISOString() });
       }
     } catch (err) {
       console.error("Upload failed:", err);
@@ -66,14 +65,6 @@ export default function ImagesClient() {
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const togglePin = async (id: string, currentPinned: boolean) => {
-    try {
-      await updateDoc(doc(db, 'saved-images', id), { pinned: !currentPinned });
-    } catch (err) {
-      console.error(err);
     }
   };
 
@@ -183,13 +174,8 @@ export default function ImagesClient() {
       ) : viewMode === 'grid' ? (
         <div className="image-grid">
           {images.map(item => (
-            <div key={item.id} className="glass-card grid-item" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s', border: item.pinned ? '1px solid #666' : undefined }}>
+            <div key={item.id} className="glass-card grid-item" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s' }}>
               <div style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {item.pinned && (
-                  <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10 }}>
-                    <Pin size={16} fill="white" />
-                  </div>
-                )}
                 <img
                   src={item.url}
                   alt="Saved asset"
@@ -203,12 +189,7 @@ export default function ImagesClient() {
                 />
               </div>
               <div style={{ padding: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)' }}>
-                <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-                  <Pin
-                    size={16}
-                    style={{ cursor: 'pointer', opacity: item.pinned ? 1 : 0.3 }}
-                    onClick={() => togglePin(item.id, !!item.pinned)}
-                  />
+                <div style={{ display: 'flex', gap: '0.8rem' }}>
                   <Download
                     size={16}
                     style={{ cursor: 'pointer', opacity: 0.6 }}
@@ -230,29 +211,21 @@ export default function ImagesClient() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {images.map(item => (
-            <div key={item.id} className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', border: item.pinned ? '1px solid #444' : undefined }}>
-              <div style={{ position: 'relative' }}>
-                <img
-                  src={item.url}
-                  alt="Thumbnail"
-                  style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', background: '#000' }}
-                />
-              </div>
+            <div key={item.id} className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <img
+                src={item.url}
+                alt="Thumbnail"
+                style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', background: '#000' }}
+              />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {item.pinned && <Pin size={12} fill="white" />}
+                <div style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: 0.8 }}>
                   {item.url}
                 </div>
                 <div style={{ fontSize: '0.65rem', opacity: 0.3 }}>
                   {new Date(item.createdAt).toLocaleString()}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
-                <Pin
-                  size={16}
-                  style={{ cursor: 'pointer', opacity: item.pinned ? 1 : 0.2 }}
-                  onClick={() => togglePin(item.id, !!item.pinned)}
-                />
+              <div style={{ display: 'flex', gap: '1rem' }}>
                 <Download
                   size={16}
                   style={{ cursor: 'pointer', opacity: 0.6 }}
@@ -260,7 +233,7 @@ export default function ImagesClient() {
                 />
                 <Trash2
                   size={16}
-                  style={{ cursor: 'pointer', opacity: 0.3, color: '#ff4444' }}
+                  style={{ cursor: 'pointer', opacity: 0.6, color: '#ff4444' }}
                   onClick={() => deleteImage(item.id)}
                 />
               </div>
@@ -268,7 +241,6 @@ export default function ImagesClient() {
           ))}
         </div>
       )}
-
       <style jsx global>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
@@ -289,6 +261,9 @@ export default function ImagesClient() {
           }
           .grid-item {
             border-radius: 2px !important;
+          }
+          .card-actions {
+            display: none !important;
           }
         }
       `}</style>
