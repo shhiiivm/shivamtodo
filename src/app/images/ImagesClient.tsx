@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import { Trash2, ImageIcon, Upload, Download, Loader2, LayoutGrid, List, Pin } from 'lucide-react';
@@ -42,10 +42,7 @@ export default function ImagesClient() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const uploadFile = useCallback(async (file: File) => {
     setUploading(true);
     const formData = new FormData();
     formData.append('file', file);
@@ -67,7 +64,31 @@ export default function ImagesClient() {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
   };
+
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            uploadFile(file);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [uploadFile]);
 
   const deleteImage = async (id: string) => {
     if (window.confirm("Delete this image?")) {
